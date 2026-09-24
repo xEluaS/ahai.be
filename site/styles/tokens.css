@@ -1,0 +1,88 @@
+/* AhAi: tokens for the silk canopy world.
+   Three dyes over a sun-white courtyard. Each dye has one job, and the
+   jobs never swap. Where two dyes cross, a chord appears: an authored
+   colour, not an accident of blending. */
+
+:root {
+  /* Dyes */
+  --indigo: #2A2F80;        /* your work; all type; primary action */
+  --indigo-hover: #232870;
+  --indigo-press: #1D2160;
+  --madder: #B0385B;        /* the person explaining */
+  --saffron: #F0B020;       /* AI, and only AI */
+
+  /* Chords. The aha is the crossing of your work and AI: Flemish dyers
+     made green by overdyeing indigo with yellow weld, so that crossing
+     is the one green on the page, and the most luminous chord. */
+  --chord-work-ai: #62A84B;         /* the aha */
+  --chord-work-why: #5E3482;        /* your work, explained */
+  --chord-madder-saffron: #9A4C2C;  /* AI, explained: kept going */
+  --chord-all: #594A79;             /* all three at once */
+
+  /* Woven tags: labels sewn onto silk, a shade deeper than their dye,
+     so the text holds its contrast whatever the fold or sheen does. */
+  --tag-indigo: #232870;
+  --tag-madder: #962E4C;
+  --tag-chord: #83401F;
+  --tag-saffron: #D8980F;   /* carries indigo text */
+
+  /* Ground */
+  --sky: #FFFFFF;           /* clear sky white, the resting state */
+
+  /* Ink, tinted from indigo rather than grey */
+  --ink: #1D1F4A;
+  --ink-soft: #55587A;
+  --rule: rgba(42, 47, 128, 0.2);
+  --selection: rgba(42, 47, 128, 0.14);
+
+  /* Type: one family, roles carried by weight, case and tracking.
+     Lexend was drawn to measurably improve reading ease, which is the
+     whole job for an audience that is not technical by definition. */
+  --font: "Lexend", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --t-label: 12px;
+  --t-small: 14px;
+  --t-body: 17px;
+  --t-lede: clamp(1.08rem, 1.5vw, 1.3rem);
+  --t-name: clamp(1rem, 1.3vw, 1.15rem);
+  --t-question: clamp(1.2rem, 2.1vw, 1.7rem);
+  --t-display-m: clamp(1.7rem, 3.4vw, 2.9rem);
+  --t-display-xl: clamp(2.3rem, 5.4vw, 5rem);
+  --t-mail: clamp(1.5rem, 3.6vw, 3rem);
+  --t-closing: clamp(4rem, 13vw, 11rem);
+
+  --w-display: 200;
+  --w-light: 300;
+  --w-body: 350;
+  --w-label: 450;
+
+  --track-display: 0.11em;
+  --track-label: 0.22em;
+  --track-mark: 0.05em;
+
+  --lh-display: 1.1;
+  --lh-body: 1.7;
+  --measure: 60ch;
+
+  /* Space: a 4px grid */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+  --s-9: 96px;
+  --section: clamp(80px, 9vw, 136px);
+
+  --wrap: 1240px;
+  --gutter: clamp(20px, 4.5vw, 64px);
+  --rail: 172px;
+
+  /* Motion: tension, not decoration. Shared scale from transitions.dev. */
+  --d-quick: 150ms;
+  --d-fast: 250ms;
+  --d-slow: 400ms;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}

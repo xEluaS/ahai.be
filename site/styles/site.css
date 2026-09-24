@@ -1,0 +1,430 @@
+/* AhAi: site styles. Tokens live in tokens.css, faces in fonts.css. */
+
+*, *::before, *::after { box-sizing: border-box; }
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(42, 47, 128, 0.35) transparent;
+}
+body {
+  margin: 0;
+  background: var(--sky);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--t-body);
+  font-weight: var(--w-body);
+  line-height: var(--lh-body);
+  caret-color: var(--indigo);
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: var(--selection); color: var(--ink); }
+img, svg { display: block; max-width: 100%; }
+[hidden] { display: none !important; }
+a { color: inherit; text-underline-offset: 0.24em; text-decoration-thickness: 1px; }
+h1, h2, h3, p, ul, ol, dl, dd { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+
+:where(a, button, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 4px;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.skip {
+  position: absolute; left: var(--gutter); top: -60px; z-index: 30;
+  background: var(--indigo); color: var(--sky); padding: var(--s-2) var(--s-4);
+  font-size: var(--t-small); text-decoration: none;
+}
+.skip:focus { top: var(--s-3); }
+
+.wrap { max-width: var(--wrap); margin-inline: auto; padding-inline: var(--gutter); }
+
+/* Labels pinned at an edge: light, wide-tracked capitals */
+.label {
+  font-size: var(--t-label);
+  font-weight: var(--w-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+.display {
+  font-weight: var(--w-display);
+  letter-spacing: var(--track-display);
+  text-transform: uppercase;
+  line-height: var(--lh-display);
+  color: var(--indigo);
+  text-wrap: balance;
+}
+
+/* A hairline that ends in two knots, the frame of the canopy board */
+.rule { position: relative; height: 1px; background: var(--rule); }
+.rule::before, .rule::after {
+  content: ""; position: absolute; top: -2px; width: 5px; height: 5px;
+  border-radius: 50%; background: var(--indigo);
+}
+.rule::before { left: 0; }
+.rule::after { right: 0; }
+
+/* A woven tag: a label sewn onto silk */
+.tag { display: inline-flex; align-items: center; padding: 6px 10px; color: var(--sky); background: var(--tag-indigo); }
+
+/* ── Wordmark: AhAi turns into AhA! ────────────────────────────
+   The i is drawn to Lexend's own glyph at the weight it sits in, per
+   1000 units: at 300 a stroke of 75, a dot of 112 and an advance of 259;
+   at 200 a stroke of 50, a dot of 91 and an advance of 242. Drawn, it
+   can morph: on a spring the stroke stretches to cap height while the
+   dot drops to the baseline. Only the dot carries colour, the green
+   chord of the aha. */
+.mark {
+  display: inline-block; text-decoration: none; white-space: nowrap;
+  font-weight: var(--w-light); letter-spacing: var(--track-mark);
+  color: var(--indigo); line-height: 1;
+}
+.mark__i { display: inline-block; width: 0.259em; height: 0.766em; vertical-align: -0.016em; overflow: visible; }
+.mark__stem { fill: currentColor; }
+.mark__dot { fill: var(--chord-work-ai); }
+
+/* ── Masthead ─────────────────────────────────────────────────── */
+.masthead { position: relative; z-index: 20; background: var(--sky); border-bottom: 1px solid var(--rule); }
+.masthead__in { display: flex; align-items: center; justify-content: space-between; gap: var(--s-5); padding-block: var(--s-5); }
+.masthead .mark { font-size: 26px; }
+.masthead__cta {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  color: var(--indigo); text-decoration: none;
+}
+.masthead__cta svg { flex: none; width: 16px; height: 11px; transition: transform var(--d-fast) var(--ease); }
+.masthead__cta:hover svg { transform: translateX(4px); }
+
+/* The rail: a thread with knots. Vertical in the hero on wide screens,
+   laid along the masthead on middle widths, a menu on phones. */
+.rail ol { position: relative; display: grid; gap: var(--s-4); }
+.rail ol::before {
+  content: ""; position: absolute; left: 3px; top: 8px; bottom: 8px; width: 1px; background: var(--rule);
+}
+.rail a {
+  position: relative; display: flex; align-items: center; gap: var(--s-4);
+  text-decoration: none; color: var(--ink-soft);
+  transition: color var(--d-quick) var(--ease);
+}
+.rail a::before {
+  content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%;
+  border: 1px solid var(--indigo); background: var(--sky);
+  transition: background-color var(--d-quick) var(--ease);
+}
+.rail a:hover, .rail a:focus-visible { color: var(--indigo); }
+.rail a:hover::before, .rail a:focus-visible::before { background: var(--indigo); }
+.rail--across { display: none; }
+.rail--across ol { grid-auto-flow: column; gap: 20px; }
+.rail--across ol::before { left: 8px; right: 8px; top: 50%; bottom: auto; width: auto; height: 1px; }
+/* Laid across, the thread shows only between the labels, never through them. */
+.rail--across a { gap: var(--s-3); padding-right: 6px; white-space: nowrap; background: var(--sky); }
+.rail--across li:last-child a { padding-right: 0; }
+
+.menu-toggle { display: none; color: var(--indigo); padding: var(--s-2) 0; }
+.menu-panel { display: none; }
+
+/* ── Hero ─────────────────────────────────────────────────────── */
+.hero { position: relative; }
+.canopy { display: block; width: 100%; height: clamp(300px, 50vh, 560px); overflow: hidden; }
+.hero__in {
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 7fr) minmax(0, 4fr);
+  grid-template-areas: "rail head side";
+  gap: var(--s-5) var(--s-7); align-items: start;
+  padding-block: var(--s-6) var(--s-8);
+}
+.hero .rail { grid-area: rail; align-self: start; padding-top: var(--s-2); }
+.hero h1 { grid-area: head; font-size: var(--t-display-xl); }
+@media (min-width: 1024px) {
+  .hero h1 { font-size: clamp(3rem, 4.3vw, 3.9rem); }
+  .hero h1 span { display: block; white-space: nowrap; }
+}
+.hero__side { grid-area: side; display: grid; gap: var(--s-6); }
+.lede { font-size: var(--t-lede); font-weight: var(--w-light); line-height: 1.6; color: var(--ink); max-width: 34ch; }
+.actions { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+
+/* The bands link to the services named after them: the band under the
+   pointer lifts, the others fall back, and its tag shows an arrow. */
+.canopy .silk__body, .canopy .silk__tex, .canopy .silk__label, .canopy .silk__chords {
+  transition: opacity var(--d-fast) var(--ease);
+}
+.canopy .is-dim { opacity: 0.2; }
+.canopy .silk__chords.is-dim { opacity: 0; }
+.silk__arrow { opacity: 0; transform: translateX(-4px); transition: opacity var(--d-quick) var(--ease), transform var(--d-quick) var(--ease); }
+.is-hot .silk__arrow { opacity: 1; transform: none; }
+.silk__ring { display: none; }
+.is-focus .silk__ring { display: inline; }
+
+/* Back to top: the mark waits in the corner once the hero has gone. */
+.totop {
+  position: fixed; z-index: 30;
+  right: max(var(--s-4), env(safe-area-inset-right));
+  bottom: calc(max(var(--s-4), env(safe-area-inset-bottom)) + var(--lift, 0px));
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s-3);
+  min-width: 44px; min-height: 44px; padding: 0 var(--s-4) 0 var(--s-3);
+  background: var(--sky); border: 1px solid var(--indigo); color: var(--indigo); text-decoration: none;
+  opacity: 0; visibility: hidden; transform: translateY(8px);
+  transition: opacity var(--d-fast) var(--ease), transform var(--d-fast) var(--ease), background-color var(--d-quick) var(--ease), visibility 0s linear var(--d-fast);
+}
+.totop.is-shown {
+  opacity: 1; visibility: visible; transform: none;
+  transition: opacity var(--d-fast) var(--ease), transform var(--d-fast) var(--ease), background-color var(--d-quick) var(--ease);
+}
+.totop:hover { background: linear-gradient(rgba(42, 47, 128, 0.06), rgba(42, 47, 128, 0.06)), var(--sky); }
+.totop .mark {
+  font-size: 26px; /* the masthead's mark, waiting in the corner */
+  max-width: 3em; overflow: hidden;
+  transition: max-width var(--d-fast) var(--ease), opacity var(--d-quick) var(--ease);
+}
+/* While the closing AhA! is in view the tile keeps only its arrow, so the
+   finale never shows the mark twice. */
+.totop.is-quiet { gap: 0; padding-inline: 0; }
+.totop.is-quiet .mark { max-width: 0; opacity: 0; }
+.totop__arrow { flex: none; width: 10px; height: 15px; transition: transform var(--d-fast) var(--ease); }
+.totop:hover .totop__arrow { transform: translateY(-3px); }
+
+/* ── Buttons: square, tracked, indigo ─────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: var(--s-3);
+  min-height: 52px; padding: 0 var(--s-5);
+  font-size: 13px; font-weight: 500; letter-spacing: var(--track-label);
+  text-transform: uppercase; text-decoration: none; white-space: nowrap;
+  border: 1px solid var(--indigo);
+  transition: background-color var(--d-quick) var(--ease), color var(--d-quick) var(--ease);
+}
+.btn svg { flex: none; width: 18px; height: 12px; transition: transform var(--d-fast) var(--ease); }
+.btn:hover svg { transform: translateX(4px); }
+.btn--primary { background: var(--indigo); color: var(--sky); }
+.btn--primary:hover { background: var(--indigo-hover); border-color: var(--indigo-hover); }
+.btn--primary:active { background: var(--indigo-press); border-color: var(--indigo-press); }
+.btn--ghost { color: var(--indigo); background: transparent; }
+.btn--ghost:hover { background: rgba(42, 47, 128, 0.06); }
+.btn--ghost:active { background: rgba(42, 47, 128, 0.12); }
+
+/* ── Sections ─────────────────────────────────────────────────── */
+.section { padding-block: var(--section) 0; }
+.section--first { padding-top: var(--s-7); }
+.section__head { display: grid; gap: var(--s-4); padding-top: var(--s-7); margin-bottom: var(--s-7); }
+.section__head h2 { font-size: var(--t-display-m); max-width: 18ch; }
+.section__intro { color: var(--ink-soft); max-width: var(--measure); }
+
+/* ── Jouw werk: the crossing ──────────────────────────────────── */
+.jobs { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.jobs label { position: relative; cursor: pointer; }
+.jobs input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.jobs span {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--s-4);
+  border: 1px solid var(--rule); color: var(--ink-soft);
+  font-size: var(--t-label); font-weight: var(--w-label);
+  letter-spacing: var(--track-label); text-transform: uppercase;
+  transition: border-color var(--d-quick) var(--ease), color var(--d-quick) var(--ease), background-color var(--d-quick) var(--ease);
+}
+.jobs label:hover span { border-color: var(--indigo); color: var(--indigo); }
+.jobs input:checked + span { background: var(--indigo); border-color: var(--indigo); color: var(--sky); }
+.jobs input:focus-visible + span { outline: 2px solid var(--indigo); outline-offset: 3px; }
+
+.crossing {
+  position: relative; margin-top: var(--s-7); overflow: hidden;
+  border-block: 1px solid var(--rule);
+}
+.crossing__silk { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.crossing__work { position: absolute; left: var(--gutter); top: 0; z-index: 1; white-space: nowrap; gap: 0; }
+.crossing__work span + b::before {
+  content: ""; display: inline-block; width: 1px; height: 0.95em; margin-inline: 10px;
+  background: rgba(255, 255, 255, 0.45); vertical-align: -0.12em;
+}
+.crossing__work b { font-weight: var(--w-label); }
+.crossing__grid {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: minmax(0, 0.7fr) minmax(0, 3fr);
+  gap: var(--s-6); padding-top: 212px; padding-bottom: var(--s-8);
+}
+.crossing__note { color: var(--ink-soft); font-size: var(--t-small); max-width: 26ch; padding: var(--s-2) 40px 0 0; }
+.crossing__list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-6); }
+.crossing__list li p {
+  font-size: var(--t-name); font-weight: var(--w-light); line-height: 1.55;
+  padding: 0 28px 0 46px;
+}
+.x-strip { display: none; }
+
+.swap-out { opacity: 0; filter: blur(2px); transform: translateY(4px); }
+.swapping { transition: opacity var(--d-quick) var(--ease), filter var(--d-quick) var(--ease), transform var(--d-quick) var(--ease); }
+
+/* ── Sessies: lanes of silk, not cards ────────────────────────── */
+.lanes { display: grid; }
+.lane { position: relative; padding-bottom: var(--s-7); scroll-margin-top: var(--s-6); }
+.lane[data-dye="indigo"] { --tag: var(--tag-indigo); }
+.lane[data-dye="madder"] { --tag: var(--tag-madder); }
+.lane[data-dye="saffron"] { --tag: var(--tag-saffron); --tag-ink: var(--indigo); }
+.lane__silk { position: relative; height: 112px; }
+.lane__silk svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+.lane__band {
+  position: absolute; inset: 0; z-index: 1;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-5);
+  color: var(--sky); pointer-events: none;
+}
+.lane__names { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.lane__word, .lane__band h3, .lane__spec { background: var(--tag); color: var(--tag-ink, var(--sky)); padding: 6px 10px; }
+.lane__word { margin: 0; }
+.lane__band h3 { font-size: var(--t-name); font-weight: var(--w-label); letter-spacing: 0.14em; text-transform: uppercase; line-height: 1.5; }
+.lane__spec { text-align: right; }
+.lane__spec span { display: block; }
+.lane__body {
+  display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--s-5) var(--s-8); padding-top: var(--s-5); align-items: baseline;
+}
+.lane__body p { max-width: 54ch; }
+.lane__for { display: grid; gap: var(--s-1); padding-left: var(--s-5); border-left: 1px solid var(--rule); }
+.lane__for dt { color: var(--ink-soft); }
+.lane__for dd { color: var(--ink); }
+
+/* ── Vragen: examples of what gets asked ──────────────────────── */
+.questions {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--rule);
+}
+.questions li {
+  display: grid; gap: var(--s-3); align-content: start;
+  padding: var(--s-6) var(--s-6) var(--s-6) 0; border-bottom: 1px solid var(--rule);
+}
+.questions li:nth-child(even) { padding-left: var(--s-6); border-left: 1px solid var(--rule); }
+.questions p { font-size: var(--t-question); font-weight: var(--w-display); line-height: 1.3; color: var(--indigo); max-width: 26ch; text-wrap: balance; }
+.questions span { color: var(--ink-soft); }
+
+/* ── Wie ──────────────────────────────────────────────────────── */
+.who {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  border-block: 1px solid var(--rule);
+}
+.portrait { position: relative; margin: 0; min-height: 420px; overflow: hidden; border-inline: 1px solid var(--rule); }
+.portrait svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.portrait figcaption { position: absolute; left: var(--s-4); bottom: var(--s-4); z-index: 1; }
+.who__text { display: grid; gap: var(--s-7); padding: var(--s-7) 0 var(--s-7) var(--s-7); }
+.who__text h2 { font-size: var(--t-display-m); }
+.who__text > p { font-size: var(--t-lede); font-weight: var(--w-light); line-height: 1.6; max-width: 40ch; }
+.creds { display: grid; }
+.creds > div {
+  display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: var(--s-5);
+  padding: var(--s-4) 0; border-top: 1px solid var(--rule); align-items: baseline;
+}
+.creds > div:last-child { border-bottom: 1px solid var(--rule); }
+.creds dt { color: var(--indigo); }
+.practice h3 { color: var(--ink-soft); margin-bottom: var(--s-4); }
+.practice ul { display: grid; gap: var(--s-3); }
+.practice li { padding-left: var(--s-5); position: relative; }
+.practice li::before { content: ""; position: absolute; left: 0; top: 0.8em; width: 12px; height: 1px; background: var(--indigo); }
+
+/* ── Contact: clear sky ───────────────────────────────────────── */
+.contact { padding-block: 0 var(--section); }
+.contact__grid {
+  display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+  gap: var(--s-7); align-items: end; padding-top: var(--s-8);
+}
+.contact__actions { margin-top: var(--s-6); }
+.contact__plain { margin-top: var(--s-5); color: var(--ink-soft); }
+
+/* ── The finale: the three silks weave into one ───────────────── */
+.braid { position: relative; height: clamp(220px, 24vw, 320px); border-block: 1px solid var(--rule); overflow: hidden; }
+.braid__silk { position: absolute; inset: 0; width: 100%; height: 100%; }
+.braid__in { position: relative; height: 100%; display: flex; align-items: center; justify-content: flex-end; pointer-events: none; }
+.braid__tag { margin: 0; }
+.contact h2 { font-size: var(--t-display-m); max-width: 16ch; }
+.contact__text { margin-top: var(--s-5); color: var(--ink-soft); max-width: 46ch; }
+.mailto {
+  color: var(--indigo); text-decoration: underline; text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em; text-decoration-color: rgba(42, 47, 128, 0.35);
+  transition: text-decoration-color var(--d-quick) var(--ease);
+}
+.mailto:hover { text-decoration-color: var(--indigo); }
+.closing { justify-self: end; }
+.closing .mark { font-size: var(--t-closing); font-weight: var(--w-display); letter-spacing: 0.02em; }
+.closing .mark__i { width: 0.242em; }
+
+.footer { border-top: 1px solid var(--rule); color: var(--ink-soft); }
+.footer__in { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s-2) var(--s-6); padding-block: var(--s-6); }
+.footer__in div { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-6); }
+
+/* ── Middle widths: the rail lies along the masthead ──────────── */
+@media (max-width: 1023px) {
+  .hero .rail { display: none; }
+  .rail--across { display: block; }
+  .masthead__cta { display: none; }
+  /* the side is wide enough for "Schrijf me een mail" and its arrow on one line */
+  .hero__in { grid-template-columns: minmax(0, 7fr) minmax(0, 6fr); grid-template-areas: "head side"; }
+}
+@media (max-width: 1199px) {
+  .crossing { border: 0; overflow: visible; }
+  .crossing__silk { display: none; }
+  .crossing__work { position: static; margin: 0 0 var(--s-5) var(--gutter); }
+  .crossing__grid { grid-template-columns: minmax(0, 1fr); padding-top: 0; padding-bottom: 0; }
+  .crossing__note { order: 2; max-width: var(--measure); padding-right: 0; }
+  .crossing__list { grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
+  .crossing__list li p { padding: 0; max-width: var(--measure); }
+  .x-strip {
+    display: block; height: 80px; margin: 0 calc(-1 * var(--gutter)) var(--s-4);
+    width: calc(100% + 2 * var(--gutter)); max-width: none; overflow: hidden;
+    border-block: 1px solid var(--rule);
+  }
+}
+@media (max-width: 900px) {
+  .who { grid-template-columns: minmax(0, 1fr); }
+  .portrait { border-bottom: 1px solid var(--rule); min-height: 300px; }
+  .who__text { padding: var(--s-7) 0; }
+  .lane__body { grid-template-columns: minmax(0, 1fr); }
+  .contact__grid { grid-template-columns: minmax(0, 1fr); }
+  .closing { justify-self: start; }
+}
+@media (max-width: 760px) {
+  .hero__in { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "side"; gap: var(--s-5); }
+  .hero h1 { max-width: 9em; } /* stacked, it still breaks as HET MOMENT / DAT AI KLIKT. */
+}
+
+/* ── Phones ───────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  .rail--across { display: none; }
+  .menu-toggle { display: inline-flex; }
+  .menu-panel {
+    display: block; position: absolute; left: 0; right: 0; top: 100%;
+    background: var(--sky); border-bottom: 1px solid var(--rule);
+    padding: var(--s-5) var(--gutter) var(--s-7);
+    opacity: 0; visibility: hidden; transform: translateY(-8px); filter: blur(2px);
+    transition: opacity var(--d-fast) var(--ease), transform var(--d-fast) var(--ease), filter var(--d-fast) var(--ease), visibility 0s linear var(--d-fast);
+  }
+  .menu-panel.is-open {
+    opacity: 1; visibility: visible; transform: none; filter: none;
+    transition: opacity var(--d-slow) var(--ease), transform var(--d-slow) var(--ease), filter var(--d-slow) var(--ease);
+  }
+  .menu-panel ul { display: grid; gap: var(--s-2); }
+  .menu-panel a {
+    display: block; padding-block: var(--s-2); text-decoration: none;
+    font-size: 1.6rem; font-weight: var(--w-display); letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--indigo);
+  }
+  .canopy { height: clamp(240px, 38vh, 340px); }
+
+  .lane__silk { height: 136px; }
+  .braid__tag { display: none; }
+  .lane__band { flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; }
+  .lane__spec { text-align: left; }
+  .lane__spec span { display: inline; }
+  .lane__spec span + span::before { content: " \00B7  "; }
+
+  .questions { grid-template-columns: minmax(0, 1fr); }
+  .questions li, .questions li:nth-child(even) { padding: var(--s-5) 0; border-left: 0; }
+  .creds > div { grid-template-columns: minmax(0, 1fr); gap: var(--s-1); }
+  .footer__in { flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

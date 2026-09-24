@@ -1,0 +1,7 @@
+# Only the website is published. Product notes, design reviews,
+# explorations and tooling stay on this machine.
+/*
+!/.gitignore
+!/.github/
+!/README.md
+!/site/

@@ -209,7 +209,7 @@
       if (r.link) {
         r.labelArrow = el("path", { class: "silk__arrow", fill: "none", stroke: r.labelColor, "stroke-width": 1.3, "stroke-linecap": "square" }, lg);
         /* a keyboard focus ring that reads on any dye: sky inside, ink outside */
-        r.ringIn = el("rect", { class: "silk__ring", fill: "none", stroke: "#fff", "stroke-width": 2 }, lg);
+        r.ringIn = el("rect", { class: "silk__ring", fill: "none", stroke: token("--sky"), "stroke-width": 2 }, lg);
         r.ringOut = el("rect", { class: "silk__ring", fill: "none", stroke: token("--ink"), "stroke-width": 2 }, lg);
       }
       r.labelOuter = outer;
@@ -652,8 +652,18 @@
     var tile = document.querySelector(".totop"), hero = document.querySelector(".hero"), foot = document.querySelector(".footer");
     if (!tile || !hero || !("IntersectionObserver" in window)) return;
     new IntersectionObserver(function (e) { tile.classList.toggle("is-shown", !e[0].isIntersecting); }).observe(hero);
-    var end = document.querySelector(".closing");
-    if (end) new IntersectionObserver(function (e) { tile.classList.toggle("is-quiet", e[0].isIntersecting); }).observe(end);
+    var end = document.querySelector(".closing"), fold = 0, quick = reduce.matches ? 0 : parseFloat(token("--d-quick")) || 150;
+    if (end) new IntersectionObserver(function (e) {
+      clearTimeout(fold);
+      if (e[0].isIntersecting) {
+        tile.classList.add("is-quiet");
+        fold = setTimeout(function () { tile.classList.add("is-folded"); }, quick);
+      } else {
+        tile.classList.remove("is-folded");
+        void tile.offsetWidth; /* the mark is back in layout before it fades in */
+        tile.classList.remove("is-quiet");
+      }
+    }).observe(end);
     if (!foot) return;
     var queued = false;
     function lift() {

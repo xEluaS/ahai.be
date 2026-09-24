@@ -178,13 +178,14 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .totop:hover { background: linear-gradient(rgba(42, 47, 128, 0.06), rgba(42, 47, 128, 0.06)), var(--sky); }
 .totop .mark {
   font-size: 26px; /* the masthead's mark, waiting in the corner */
-  max-width: 3em; overflow: hidden;
-  transition: max-width var(--d-fast) var(--ease), opacity var(--d-quick) var(--ease);
+  transition: opacity var(--d-quick) var(--ease);
 }
 /* While the closing AhA! is in view the tile keeps only its arrow, so the
-   finale never shows the mark twice. */
-.totop.is-quiet { gap: 0; padding-inline: 0; }
-.totop.is-quiet .mark { max-width: 0; opacity: 0; }
+   finale never shows the mark twice: the mark fades, then the tile folds
+   to a square in one step, so no layout property is animated. */
+.totop.is-quiet .mark { opacity: 0; }
+.totop.is-folded { gap: 0; padding-inline: 0; }
+.totop.is-folded .mark { display: none; }
 .totop__arrow { flex: none; width: 10px; height: 15px; transition: transform var(--d-fast) var(--ease); }
 .totop:hover .totop__arrow { transform: translateY(-3px); }
 

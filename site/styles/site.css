@@ -180,6 +180,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .klikt__go:hover svg { transform: translateX(4px); }
 .klikt__hint, .klikt__fout { font-size: var(--t-small); }
 .klikt__hint { color: var(--ink-soft); }
+.klikt__hint a { color: var(--indigo); }
 .klikt__fout { color: var(--ink); }
 
 /* The result: the meter strip runs edge to edge like the lanes, the
@@ -198,7 +199,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .match__caption { margin-top: var(--s-3); color: var(--ink-soft); }
 .match__frame { display: grid; gap: var(--s-2); }
 .match__frame div { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); }
-.match__frame dt { font-size: var(--t-small); color: var(--ink-soft); }
+.match__frame dt { font-size: var(--t-small); color: var(--ink); }
+.match__weight { margin-left: var(--s-1); font-size: var(--t-label); color: var(--ink-soft); white-space: nowrap; }
 .match__frame dd { display: flex; gap: 6px; }
 .match__frame dd span { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--indigo); }
 .match__frame dd span.is-on { background: var(--indigo); }
@@ -405,6 +407,26 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .closing { justify-self: end; }
 .closing .mark { font-size: var(--t-closing); font-weight: var(--w-display); letter-spacing: 0.02em; }
 .closing .mark__i { width: 0.242em; }
+
+/* ── Privacy: a plain page to read ────────────────────────────── */
+.legal { padding-block: var(--s-8) var(--section); }
+.legal h1 { font-size: var(--t-display-m); margin: var(--s-7) 0 var(--s-5); }
+.legal h2 {
+  margin: var(--s-7) 0 var(--s-3); color: var(--indigo);
+  font-size: var(--t-name); font-weight: var(--w-label); letter-spacing: var(--track-label); text-transform: uppercase;
+}
+.legal p, .legal li { max-width: var(--measure); text-wrap: pretty; }
+.legal p + p { margin-top: var(--s-4); }
+.legal__lede { font-size: var(--t-lede); font-weight: var(--w-light); line-height: 1.6; }
+.legal ul { display: grid; gap: var(--s-3); }
+.legal li { position: relative; padding-left: var(--s-5); }
+.legal li::before {
+  content: ""; position: absolute; left: 0; top: 0.72em;
+  width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--indigo);
+}
+.legal strong { font-weight: var(--w-label); }
+.legal a { color: var(--indigo); }
+.legal p.legal__updated { margin-top: var(--s-7); font-size: var(--t-small); color: var(--ink-soft); }
 
 .footer { border-top: 1px solid var(--rule); color: var(--ink-soft); }
 .footer__in { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s-2) var(--s-6); padding-block: var(--s-6); }

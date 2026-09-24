@@ -6,5 +6,23 @@ compatibility_date = "2026-09-01"
 # Which Gemini model rates the tasks; any Flash model on the free tier works.
 GEMINI_MODEL = "gemini-flash-latest"
 
-# The API key is a secret, never in this file:
+# The answers, kept without name or IP address. Created with:
+#   npx wrangler d1 create ahai-klikt --location weur
+[[d1_databases]]
+binding = "DB"
+database_name = "ahai-klikt"
+database_id = "VUL-IN-NA-D1-CREATE"
+
+# At most ten analyses per visitor per minute.
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }
+
+# Every night, answers older than twelve months are deleted.
+[triggers]
+crons = ["0 3 * * *"]
+
+# Secrets, never in this file:
 #   npx wrangler secret put GEMINI_API_KEY
+#   npx wrangler secret put OVERZICHT_WACHTWOORD

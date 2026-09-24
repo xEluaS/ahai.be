@@ -1,9 +1,9 @@
 /* AhAi: Klikt het?
-   A visitor describes a task from their work. The task is rated on five
-   fixed criteria, and the match is computed from those ratings, so the
-   number always means the same thing. Until the analysis service is
-   connected (a data-endpoint on the form), a plain-language stand-in
-   rates the text in the browser. Nothing is stored. */
+   A visitor describes a task from their work. The analysis service (a
+   data-endpoint on the form) has Gemini choose the factors that matter for
+   that task, rate and weigh them and write the reasons; the match is then
+   computed here from those factors, never taken from the model. Without an
+   endpoint, a plain-language stand-in rates the text in the browser. */
 (function () {
   "use strict";
 
@@ -25,26 +25,25 @@
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
   var busy = false, keep = false;
 
-  /* ── The framework: five criteria, each rated 0 to 3 ──────────── */
-  var CRITERIA = [
-    { key: "herhaling", name: "Herhaling", weight: 25 },
-    { key: "tekst", name: "Tekst en documenten", weight: 25 },
-    { key: "patroon", name: "Vast patroon", weight: 20 },
-    { key: "digitaal", name: "Digitaal beschikbaar", weight: 15 },
-    { key: "mens", name: "Mens aan het stuur", weight: 15 }
-  ];
+  /* ── The framework: factors rated 0 to 3 and weighed 1 to 3 ─────── */
   var SERVICES = {
     uitleggen: { name: "Ik leg het uit", href: "#uitleggen" },
     kijken: { name: "Ik kom kijken", href: "#kijken" },
     bouwen: { name: "Ik bouw het", href: "#bouwen" }
   };
+  var WEIGHT = { 1: "weegt licht", 2: "weegt gewoon", 3: "weegt zwaar" };
+  var HUMAN = "Mens aan het stuur";
 
-  /* Generous but honest: the weighted ratings map onto 45 to 95. Nothing
-     is a sure thing, so the match never reaches 100. */
-  function scoreOf(ratings) {
-    var sum = 0;
-    CRITERIA.forEach(function (c) { sum += c.weight * ratings[c.key]; });
-    return Math.min(95, Math.round(45 + 50 * (sum / 300)));
+  /* Generous but honest: the weighted average of the factors maps onto 45
+     to 95. Nothing is a sure thing, so the match never reaches 100. The
+     analysis service stores its answers with the same formula. */
+  function scoreOf(factors) {
+    var sum = 0, weight = 0;
+    factors.forEach(function (f) { sum += f.weight * f.rating; weight += f.weight; });
+    return Math.min(95, Math.round(45 + 50 * (sum / (3 * weight))));
+  }
+  function heaviest(factors) {
+    return factors.slice().sort(function (a, b) { return b.weight - a.weight || b.rating - a.rating; });
   }
   function verdictOf(score) {
     if (score >= 85) return "Dit is precies het soort werk waar AI tijd wint.";
@@ -52,16 +51,14 @@
     if (score >= 58) return "Op een paar plekken kan AI helpen.";
     return "AI helpt hier maar een beetje. Vertel me gerust meer: vaak zit er meer in dan je denkt.";
   }
-  /* The strongest reasons, two to four. Whether a person stays in control
-     is always said: as reassurance when it holds, as a warning when not. */
-  function pick(result) {
-    var r = result.ratings, seen = result.evidence;
-    /* only what the description actually says becomes a reason */
-    var order = CRITERIA.slice().sort(function (a, b) { return r[b.key] - r[a.key] || b.weight - a.weight; });
-    var chosen = order.filter(function (c) { return r[c.key] >= 2 && c.key !== "mens" && (!seen || seen[c.key]); }).slice(0, 3);
-    chosen.push(CRITERIA[4]);
-    if (chosen.length < 2) chosen = order.filter(function (c) { return !seen || seen[c.key] || c.key === "mens"; }).slice(0, 2);
-    return chosen.slice(0, 4).map(function (c) { return result.reasons[c.key]; }).filter(Boolean);
+  /* The reasons of the heaviest factors, two to four. Whether a person
+     stays in control is always said: reassurance when it holds, a warning
+     when not. */
+  function pick(factors) {
+    var order = heaviest(factors);
+    var chosen = order.filter(function (f) { return f.name !== HUMAN; }).slice(0, 3);
+    order.forEach(function (f) { if (f.name === HUMAN) chosen.push(f); });
+    return chosen.map(function (f) { return f.reason; }).filter(Boolean);
   }
 
   /* ── The stand-in: a plain reading of the text ───────────────── */
@@ -124,34 +121,26 @@
       mens: WORDS.stakes.test(t) ? 1 : WORDS.check.test(t) ? 3 : 2
     };
     var step = steps.filter(Boolean)[0];
+    /* only what the description actually says becomes a factor */
+    var factors = [];
+    if (freq) factors.push({ name: "Herhaling", rating: r.herhaling, weight: 3, reason: r.herhaling >= 2
+      ? "Het komt " + freq + " terug: vaste stappen die een tool kan overnemen."
+      : "Ook als het niet vaak terugkomt, kan AI de voorbereiding versnellen." });
+    if (docs.length) factors.push({ name: "Tekst en documenten", rating: r.tekst, weight: 3,
+      reason: "Het draait om " + docs.slice(0, 2).join(" en ") + ": taal en documenten zijn waar AI het sterkst in is." });
+    if (steps.length) factors.push({ name: "Vast patroon", rating: r.patroon, weight: 2,
+      reason: step ? "Het " + step + " volgt een vast patroon, dus AI kan het grootste deel voorbereiden." : "Er zit een vast patroon in, dus AI kan het grootste deel voorbereiden." });
+    if (WORDS.digital.test(t) || WORDS.paper.test(t)) factors.push({ name: "Digitaal beschikbaar", rating: r.digitaal, weight: 2, reason: r.digitaal >= 3
+      ? "De informatie staat al digitaal, dus niets hoeft opnieuw getypt te worden."
+      : "Een deel staat nog op papier: dat eerst digitaal krijgen is al winst." });
+    factors.push({ name: HUMAN, rating: r.mens, weight: 2, reason: r.mens >= 3
+      ? "Jij kijkt het resultaat na voor het telt, dus je blijft zelf aan het stuur."
+      : r.mens <= 1
+        ? "Hier weegt elke fout zwaar, dus AI mag hier alleen voorbereiden, nooit beslissen."
+        : "Een mens kijkt het resultaat na voor het telt: zo blijf je zelf aan het stuur." });
     return {
       status: "ok",
-      ratings: r,
-      evidence: {
-        herhaling: !!freq, tekst: docs.length > 0, patroon: steps.length > 0,
-        digitaal: WORDS.digital.test(t) || WORDS.paper.test(t), mens: true
-      },
-      reasons: {
-        herhaling: r.herhaling >= 2
-          ? "Het komt " + freq + " terug: vaste stappen die een tool kan overnemen."
-          : "Ook als het niet vaak terugkomt, kan AI de voorbereiding versnellen.",
-        tekst: r.tekst >= 2
-          ? "Het draait om " + docs.slice(0, 2).join(" en ") + ": taal en documenten zijn waar AI het sterkst in is."
-          : "Er zit weinig tekst in, dus AI helpt hier vooral met overzicht.",
-        patroon: r.patroon >= 2
-          ? (step ? "Het " + step + " volgt een vast patroon, dus AI kan het grootste deel voorbereiden." : "Er zit een vast patroon in, dus AI kan het grootste deel voorbereiden.")
-          : "Elk geval is wat anders, dus AI helpt eerder als assistent dan als automaat.",
-        digitaal: r.digitaal >= 3
-          ? "De informatie staat al digitaal, dus niets hoeft opnieuw getypt te worden."
-          : r.digitaal <= 1
-            ? "Een deel staat nog op papier: dat eerst digitaal krijgen is al winst."
-            : "De informatie is grotendeels digitaal, dus AI kan erbij.",
-        mens: r.mens >= 3
-          ? "Jij kijkt het resultaat na voor het telt, dus je blijft zelf aan het stuur."
-          : r.mens <= 1
-            ? "Hier weegt elke fout zwaar, dus AI mag hier alleen voorbereiden, nooit beslissen."
-            : "Een mens kijkt het resultaat na voor het telt: zo blijf je zelf aan het stuur."
-      },
+      factors: factors,
       service: r.herhaling >= 2 && r.patroon >= 2 && r.digitaal >= 2 ? "bouwen" : r.tekst >= 2 && r.patroon <= 1 ? "uitleggen" : "kijken"
     };
   }
@@ -194,7 +183,7 @@
     }
     out.again.textContent = "Probeer een andere taak";
     keep = false;
-    var score = scoreOf(result.ratings);
+    var score = scoreOf(result.factors);
     out.score.textContent = "Het klikt voor ";
     var count = el("span", null, reduce.matches ? String(score) : "0");
     count.setAttribute("aria-hidden", "true");
@@ -205,14 +194,16 @@
 
     out.verdict.textContent = verdictOf(score);
     [out.caption, out.reasons, out.fit].forEach(function (n) { n.hidden = false; });
-    CRITERIA.forEach(function (c) {
-      var row = el("div"), dd = el("dd"), n = result.ratings[c.key];
-      row.append(el("dt", null, c.name), dd);
-      for (var i = 1; i <= 3; i++) dd.append(el("span", i <= n ? "is-on" : null));
-      dd.append(el("span", "sr-only", n + " van 3"));
+    /* each factor with how heavily it weighs, the heaviest first */
+    heaviest(result.factors).forEach(function (f) {
+      var row = el("div"), dt = el("dt", null, f.name + " "), dd = el("dd");
+      dt.append(el("span", "match__weight", WEIGHT[f.weight] || ""));
+      row.append(dt, dd);
+      for (var i = 1; i <= 3; i++) dd.append(el("span", i <= f.rating ? "is-on" : null));
+      dd.append(el("span", "sr-only", f.rating + " van 3"));
       out.frame.append(row);
     });
-    pick(result).forEach(function (reason) { out.reasons.append(el("li", null, reason)); });
+    pick(result.factors).forEach(function (reason) { out.reasons.append(el("li", null, reason)); });
     var fit = SERVICES[result.service] || SERVICES.kijken, link = el("a", null, fit.name);
     link.href = fit.href;
     out.fit.append("Past het best bij: ", link);

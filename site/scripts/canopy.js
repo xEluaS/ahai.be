@@ -108,12 +108,13 @@
   }
   /* A ribbon on any centre line u -> [x, y], sampled finely enough for a braid. */
   function geometryFn(r) {
-    var N = 140, pts = [], h = 0.5 / N;
+    var N = r.samples || 140, pts = [], h = 0.5 / N;
     for (var i = 0; i <= N; i++) {
       var u = i / N, p = r.fn(u), a = r.fn(Math.max(0, u - h)), b = r.fn(Math.min(1, u + h));
       var tx = b[0] - a[0], ty = b[1] - a[1], tl = Math.hypot(tx, ty) || 1;
       var pinch = 1 - r.pinch * Math.pow(Math.sin(Math.PI * (u * r.folds + r.phase)), 2);
-      pts.push({ x: p[0], y: p[1], px: -ty / tl, py: tx / tl, hw: (r.w / 2) * pinch });
+      /* widthAt lets a strand swell as it turns towards the viewer */
+      pts.push({ x: p[0], y: p[1], px: -ty / tl, py: tx / tl, hw: (r.w / 2) * pinch * (r.widthAt ? r.widthAt(u) : 1) });
     }
     var s0 = r.fn(0), s1 = r.fn(1);
     return { d: offsetOutline(pts), pts: pts, angle: (Math.atan2(s1[1] - s0[1], s1[0] - s0[0]) * 180) / Math.PI };
@@ -751,6 +752,98 @@
     return layout;
   }
 
+  /* ── Klikt het? The meter ────────────────────────────────────────
+     Your work runs straight to the edge; expertise and AI wind around it
+     as far as the match reaches, then run on beside it. Each strand is
+     cut into half turns: the halves in front are drawn over the blue and
+     cross it as a chord (AI over your work is the green aha), the halves
+     behind slip under it. The turns meet where the strands are furthest
+     from the blue, so no seam ever shows on it. */
+  function meter() {
+    var svg = document.querySelector(".match__silk svg");
+    if (!svg) return null;
+    var silk = null, g = null, ratio = 0, raf = 0;
+    function smooth(e0, e1, x) { var t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); }
+    function wrapAt(x) {
+      var f = g.x0 + (g.xR - g.x0) * ratio;
+      if (f <= g.x0) return 0;
+      return Math.min(1, (f - g.x0) / (g.P / 2)) * smooth(g.x0 - g.P / 4, g.x0, x) * (1 - smooth(f, f + g.P / 2, x));
+    }
+    function theta(x) { return (2 * Math.PI * (x - g.x0)) / g.P; }
+    /* sign -1 is expertise, above the blue; sign +1 is AI, below it */
+    function strandY(sign, x) {
+      var lane = g.cy + sign * g.S, helix = g.cy + sign * g.A * Math.cos(theta(x));
+      return lane + (helix - lane) * wrapAt(x);
+    }
+    /* A ribbon wound around the blue faces you in front and behind, and
+       turns edge-on at the top and bottom of each turn, where it narrows. */
+    function facing(x) { return 1 - wrapAt(x) * 0.7 * (1 - Math.abs(Math.sin(theta(x)))); }
+    function build() {
+      silk = new Silk(svg, { blur: 3 });
+      silk.size();
+      var W = silk.W, H = silk.H, narrow = narrowQuery.matches;
+      var inset = narrow ? 24 : Math.max(28, (W - 1240) / 2 + 72);
+      g = { cy: H / 2, wI: H * 0.26, wS: H * 0.16, A: H * 0.24, S: H * 0.36, P: H * (narrow ? 1.7 : 2.4), xL: -0.02 * W, xR: 1.02 * W };
+      /* the strands run straight past their tags before they start to turn */
+      g.x0 = inset + (narrow ? 112 : 150) + g.P / 4;
+      /* half-turn boundaries: there both strands are furthest from the blue */
+      var cuts = [g.xL];
+      for (var k = 0; g.x0 + (k * g.P) / 2 < g.xR; k++) cuts.push(g.x0 + (k * g.P) / 2);
+      cuts.push(g.xR);
+      var backs = [], fronts = [];
+      [{ dye: "madder", sign: -1, label: "Expertise" }, { dye: "saffron", sign: 1, label: "AI", labelColor: DYE.indigo }].forEach(function (s) {
+        for (var i = 0; i < cuts.length - 1; i++) {
+          /* half turn i - 1: expertise lies in front on even turns, AI on odd ones */
+          var turn = i - 1, inFront = turn >= 0 && (s.sign < 0 ? turn % 2 === 0 : turn % 2 === 1);
+          (inFront ? fronts : backs).push({ s: s, xa: cuts[i], xb: cuts[i + 1] + (i < cuts.length - 2 ? 0.6 : 0), first: i === 0 });
+        }
+      });
+      function strand(seg) {
+        var r = silk.add({ dye: seg.s.dye, label: seg.first ? seg.s.label : null, labelColor: seg.s.labelColor || "#fff", pinch: 0, opacity: 1, samples: 36 });
+        r.fn = function (u) { var x = seg.xa + (seg.xb - seg.xa) * u; return [x, strandY(seg.s.sign, x)]; };
+        r.widthAt = function (u) { return facing(seg.xa + (seg.xb - seg.xa) * u); };
+        r.w = g.wS;
+        r.labelInset = inset;
+        return r;
+      }
+      var under = backs.map(strand);
+      var work = silk.add({ dye: "indigo", label: "Jouw werk", pinch: 0.1, folds: 1.4, phase: 0.2, opacity: 0.92 });
+      work.fn = function (u) { return [g.xL + (g.xR - g.xL) * u, g.cy]; };
+      work.w = g.wI;
+      work.labelInset = inset;
+      var over = fronts.map(strand);
+      over.forEach(function (f) { silk.chord(f, work); silk.over(f, work); });
+      under.forEach(function (b) { silk.over(work, b); });
+    }
+    function draw() {
+      silk.ribbons.forEach(function (r) { r.a = r.fn(0); r.b = r.fn(1); });
+      silk.draw();
+    }
+    return {
+      /* null lets the strands wait beside your work; a score winds them in */
+      show: function (score, onStep) {
+        /* the strip may have changed size while it was hidden */
+        if (!silk || Math.abs(svg.getBoundingClientRect().width - silk.W) > 1) build();
+        cancelAnimationFrame(raf);
+        var to = score == null ? 0 : Math.max(0, Math.min(1, score / 100)), from = ratio, t0 = 0;
+        if (reduce.matches || score == null) { ratio = to; draw(); if (onStep) onStep(1); return; }
+        raf = requestAnimationFrame(function step(now) {
+          if (!t0) t0 = now;
+          var t = Math.min(1, (now - t0) / 1600), e = 1 - Math.pow(1 - t, 3);
+          ratio = from + (to - from) * e;
+          draw();
+          if (onStep) onStep(e);
+          if (t < 1) raf = requestAnimationFrame(step);
+        });
+      },
+      layout: function () {
+        if (!svg.getBoundingClientRect().width) return;
+        build();
+        draw();
+      }
+    };
+  }
+
   /* ── The mark: the i becomes ! on a spring ───────────────────── */
   /* Each mark's markup draws the i at its own weight; the ! is Lexend's at
      any weight: a stroke from cap height down to 241, then a dot sunk a
@@ -810,6 +903,13 @@
   function start() {
     makeWeave(function () {
       var layouts = [heroCanopy(), crossing(), lanes(), portrait(), braid()].filter(Boolean);
+      var m = meter();
+      if (m) {
+        /* klikt.js drives the meter; the page only keeps it in shape */
+        window.AhAi = window.AhAi || {};
+        window.AhAi.meter = m;
+        layouts.push(m.layout);
+      }
       var pending = 0;
       window.addEventListener("resize", function () {
         cancelAnimationFrame(pending);

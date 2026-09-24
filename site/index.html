@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="styles/tokens.css">
 <link rel="stylesheet" href="styles/site.css">
 <script src="scripts/canopy.js" defer></script>
+<script src="scripts/klikt.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#inhoud">Naar de inhoud</a>
@@ -65,6 +66,18 @@
         </ol>
       </nav>
       <h1 id="hero-title" class="display"><span>Het moment</span> <span>dat AI</span> <span>klikt.</span></h1>
+      <form class="klikt" id="klikt" novalidate>
+        <label class="klikt__label label" for="klikt-taak">Beschrijf een taak uit je werk</label>
+        <div class="klikt__field">
+          <textarea id="klikt-taak" name="taak" rows="1" maxlength="600" autocomplete="off" placeholder="Elke week zet ik bestellingen uit mails in Excel." aria-describedby="klikt-hint klikt-fout"></textarea>
+          <button class="klikt__go" type="submit">
+            Klikt het?
+            <svg viewBox="0 0 18 12" fill="none" aria-hidden="true"><path d="M1 6h15M11.5 1.5 16 6l-4.5 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="square"/></svg>
+          </button>
+        </div>
+        <p class="klikt__hint" id="klikt-hint">Geen namen of persoonsgegevens. Je tekst wordt niet bewaard.</p>
+        <p class="klikt__fout" id="klikt-fout" hidden></p>
+      </form>
       <div class="hero__side">
         <p class="lede">Ik ben Elias, onderzoeker en docent in AI. Ik leg uit wat AI kan, kom kijken waar het jullie tijd wint en bouw wat jullie nodig hebben.</p>
         <div class="actions">
@@ -72,7 +85,28 @@
             Schrijf me een mail
             <svg viewBox="0 0 18 12" fill="none" aria-hidden="true"><path d="M1 6h15M11.5 1.5 16 6l-4.5 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="square"/></svg>
           </a>
-          <a class="btn btn--ghost" href="#doen">Wat ik doe</a>
+        </div>
+      </div>
+    </div>
+    <div class="match" id="klikt-uitslag" hidden>
+      <div class="match__silk"><svg aria-hidden="true" focusable="false"></svg></div>
+      <div class="wrap match__in" aria-busy="false">
+        <div class="match__head">
+          <p class="match__score display" tabindex="-1" data-score>Even kijken…</p>
+          <p class="match__verdict" data-verdict></p>
+          <p class="match__caption label" id="klikt-kader">Zo komt de score tot stand</p>
+          <dl class="match__frame" data-frame aria-labelledby="klikt-kader"></dl>
+        </div>
+        <div class="match__body">
+          <ul class="match__reasons" data-reasons></ul>
+          <p class="match__fit" data-fit></p>
+          <div class="actions">
+            <a class="btn btn--primary" data-mail href="mailto:elias@ahai.be?subject=Klikt%20het%3F">
+              Stuur dit naar Elias
+              <svg viewBox="0 0 18 12" fill="none" aria-hidden="true"><path d="M1 6h15M11.5 1.5 16 6l-4.5 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="square"/></svg>
+            </a>
+            <button class="btn btn--ghost" type="button" data-again>Probeer een andere taak</button>
+          </div>
         </div>
       </div>
     </div>

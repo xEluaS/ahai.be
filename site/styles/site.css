@@ -130,11 +130,12 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 /* ── Hero ─────────────────────────────────────────────────────── */
 .hero { position: relative; }
-.canopy { display: block; width: 100%; height: clamp(300px, 50vh, 560px); overflow: hidden; }
+/* tall enough to fly, short enough that "Klikt het?" is in the first screen */
+.canopy { display: block; width: 100%; height: clamp(260px, 40vh, 520px); overflow: hidden; }
 .hero__in {
   display: grid;
   grid-template-columns: var(--rail) minmax(0, 7fr) minmax(0, 4fr);
-  grid-template-areas: "rail head side";
+  grid-template-areas: "rail head side" "rail form form";
   gap: var(--s-5) var(--s-7); align-items: start;
   padding-block: var(--s-6) var(--s-8);
 }
@@ -147,6 +148,65 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .hero__side { grid-area: side; display: grid; gap: var(--s-6); }
 .lede { font-size: var(--t-lede); font-weight: var(--w-light); line-height: 1.6; color: var(--ink); max-width: 34ch; }
 .actions { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+
+/* ── Klikt het? A task in, a match out ─────────────────────────── */
+.klikt { grid-area: form; display: grid; gap: var(--s-2); }
+.klikt__label { color: var(--ink-soft); }
+.klikt__field {
+  display: flex; align-items: stretch;
+  border: 1px solid var(--indigo); background: var(--sky);
+}
+.klikt__field:focus-within { outline: 2px solid var(--indigo); outline-offset: 3px; }
+.klikt textarea {
+  flex: 1; min-width: 0; min-height: 52px; margin: 0; border: 0; resize: none; overflow: hidden;
+  padding: 14px var(--s-4); background: transparent; color: var(--ink);
+  font: inherit; font-size: var(--t-body); font-weight: var(--w-body); line-height: 1.4;
+  text-wrap: pretty;
+}
+.klikt textarea::placeholder { color: var(--ink-soft); opacity: 1; }
+.klikt textarea:focus-visible { outline: none; }
+/* The field spans the headline and side columns: its text box ends where
+   the side column starts, so "Klikt het?" sits under "Schrijf me een mail". */
+.klikt__go {
+  flex: none; width: calc((100% - var(--s-7)) * 4 / 11);
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s-3);
+  padding: 0 var(--s-5); border-left: 1px solid var(--indigo); color: var(--indigo);
+  font-size: 13px; font-weight: 500; letter-spacing: var(--track-label); text-transform: uppercase; white-space: nowrap;
+  transition: background-color var(--d-quick) var(--ease);
+}
+.klikt__go:hover { background: rgba(42, 47, 128, 0.06); }
+.klikt__go:active { background: rgba(42, 47, 128, 0.12); }
+.klikt__go svg { flex: none; width: 18px; height: 12px; transition: transform var(--d-fast) var(--ease); }
+.klikt__go:hover svg { transform: translateX(4px); }
+.klikt__hint, .klikt__fout { font-size: var(--t-small); }
+.klikt__hint { color: var(--ink-soft); }
+.klikt__fout { color: var(--ink); }
+
+/* The result: the meter strip runs edge to edge like the lanes, the
+   reading sits in the wrap below it. */
+.match { padding-bottom: var(--s-8); }
+.match__silk { position: relative; height: clamp(150px, 13vw, 190px); border-block: 1px solid var(--rule); overflow: hidden; }
+.match__silk svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.match__in {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: var(--s-6) var(--s-8); padding-top: var(--s-7);
+}
+.match__head { display: grid; gap: var(--s-4); align-content: start; }
+.match__score { font-size: var(--t-display-m); }
+.match__score:focus { outline: none; }
+.match__verdict { color: var(--ink); max-width: 32ch; text-wrap: pretty; }
+.match__caption { margin-top: var(--s-3); color: var(--ink-soft); }
+.match__frame { display: grid; gap: var(--s-2); }
+.match__frame div { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); }
+.match__frame dt { font-size: var(--t-small); color: var(--ink-soft); }
+.match__frame dd { display: flex; gap: 6px; }
+.match__frame dd span { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--indigo); }
+.match__frame dd span.is-on { background: var(--indigo); }
+.match__body { display: grid; gap: var(--s-5); align-content: start; }
+.match__reasons li { padding: var(--s-3) 0; border-top: 1px solid var(--rule); max-width: var(--measure); text-wrap: pretty; }
+.match__reasons li:last-child { border-bottom: 1px solid var(--rule); }
+.match__fit { color: var(--ink-soft); }
+.match__fit a { color: var(--indigo); }
 
 /* The bands link to the services named after them: the band under the
    pointer lifts, the others fall back, and its tag shows an arrow. */
@@ -356,7 +416,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   .rail--across { display: block; }
   .masthead__cta { display: none; }
   /* the side is wide enough for "Schrijf me een mail" and its arrow on one line */
-  .hero__in { grid-template-columns: minmax(0, 7fr) minmax(0, 6fr); grid-template-areas: "head side"; }
+  .hero__in { grid-template-columns: minmax(0, 7fr) minmax(0, 6fr); grid-template-areas: "head side" "form form"; }
+  .klikt__go { width: calc((100% - var(--s-7)) * 6 / 13); }
 }
 @media (max-width: 1199px) {
   .crossing { border: 0; overflow: visible; }
@@ -381,8 +442,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   .closing { justify-self: start; }
 }
 @media (max-width: 760px) {
-  .hero__in { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "side"; gap: var(--s-5); }
+  .hero__in { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "form" "side"; gap: var(--s-6); }
   .hero h1 { max-width: 9em; } /* stacked, it still breaks as HET MOMENT / DAT AI KLIKT. */
+  .klikt__go { width: auto; }
 }
 
 /* ── Phones ───────────────────────────────────────────────────── */
@@ -415,10 +477,19 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   .lane__spec span { display: inline; }
   .lane__spec span + span::before { content: " \00B7  "; }
 
+  .match__in { grid-template-columns: minmax(0, 1fr); }
+  .match__silk { height: 140px; }
+
   .questions { grid-template-columns: minmax(0, 1fr); }
   .questions li, .questions li:nth-child(even) { padding: var(--s-5) 0; border-left: 0; }
   .creds > div { grid-template-columns: minmax(0, 1fr); gap: var(--s-1); }
   .footer__in { flex-direction: column; }
+}
+
+@media (max-width: 560px) {
+  .klikt__field { flex-direction: column; }
+  .klikt textarea { min-height: 78px; }
+  .klikt__go { min-height: 48px; border-left: 0; border-top: 1px solid var(--indigo); }
 }
 
 @media (prefers-reduced-motion: reduce) {

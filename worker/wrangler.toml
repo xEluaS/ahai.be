@@ -1,0 +1,10 @@
+name = "ahai-klikt"
+main = "index.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+# Which Gemini model rates the tasks; any Flash model on the free tier works.
+GEMINI_MODEL = "gemini-flash-latest"
+
+# The API key is a secret, never in this file:
+#   npx wrangler secret put GEMINI_API_KEY

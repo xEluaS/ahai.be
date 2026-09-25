@@ -67,6 +67,7 @@ export default {
     if (url.pathname === "/overzicht" || url.pathname === "/overzicht.csv" || url.pathname === "/overzicht/verwijder") {
       return overview(request, env, url);
     }
+    if (url.pathname === "/bewaar") return keepFallback(request, env);
     return analyse(request, env, ctx);
   },
   async scheduled(event, env) {
@@ -75,22 +76,30 @@ export default {
 };
 
 /* ── The analysis ─────────────────────────────────────────────── */
-async function analyse(request, env, ctx) {
+function corsFor(request) {
   const origin = request.headers.get("Origin") || "";
-  const cors = {
-    "Access-Control-Allow-Origin": ALLOWED.includes(origin) ? origin : ALLOWED[0],
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Vary": "Origin"
+  return {
+    allowed: ALLOWED.includes(origin),
+    cors: {
+      "Access-Control-Allow-Origin": ALLOWED.includes(origin) ? origin : ALLOWED[0],
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Vary": "Origin"
+    }
   };
-  if (request.method === "OPTIONS") return new Response(null, { headers: cors });
-  if (request.method !== "POST" || !ALLOWED.includes(origin)) return reply({ error: "niet toegestaan" }, 403, cors);
+}
+// A limit per visitor, when a LIMITER binding is configured.
+async function limited(request, env) {
+  if (!env.LIMITER) return false;
+  const { success } = await env.LIMITER.limit({ key: request.headers.get("CF-Connecting-IP") || "onbekend" });
+  return !success;
+}
 
-  // A limit per visitor, when a LIMITER binding is configured.
-  if (env.LIMITER) {
-    const { success } = await env.LIMITER.limit({ key: request.headers.get("CF-Connecting-IP") || "onbekend" });
-    if (!success) return reply({ error: "even wachten" }, 429, cors);
-  }
+async function analyse(request, env, ctx) {
+  const { allowed, cors } = corsFor(request);
+  if (request.method === "OPTIONS") return new Response(null, { headers: cors });
+  if (request.method !== "POST" || !allowed) return reply({ error: "niet toegestaan" }, 403, cors);
+  if (await limited(request, env)) return reply({ error: "even wachten" }, 429, cors);
 
   let body;
   try { body = await request.json(); } catch { return reply({ error: "ongeldig" }, 400, cors); }
@@ -101,8 +110,9 @@ async function analyse(request, env, ctx) {
   // lighter Flash models, before giving up.
   const first = env.GEMINI_MODEL || "gemini-flash-latest";
   const models = [first, first, "gemini-flash-lite-latest", "gemini-2.5-flash"];
-  let res = null;
+  let res = null, used = "";
   for (let i = 0; i < models.length; i++) {
+    used = models[i];
     if (i === 1) await new Promise((ok) => setTimeout(ok, 800));
     res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[i]}:generateContent`, {
       method: "POST",
@@ -129,8 +139,28 @@ async function analyse(request, env, ctx) {
     return reply({ error: "antwoord" }, 502, cors);
   }
   // Keeping the answer never delays it.
-  if (env.DB) ctx.waitUntil(keep(env.DB, tekst, result).catch(() => {}));
+  if (env.DB) ctx.waitUntil(keep(env.DB, tekst, result, used).catch(() => {}));
   return reply(result, 200, cors);
+}
+
+// When Gemini could not answer, the page shows its own plain reading and
+// sends it here, so the overview holds everything visitors were shown.
+async function keepFallback(request, env) {
+  const { allowed, cors } = corsFor(request);
+  if (request.method === "OPTIONS") return new Response(null, { headers: cors });
+  if (request.method !== "POST" || !allowed) return reply({ error: "niet toegestaan" }, 403, cors);
+  if (await limited(request, env)) return reply({ error: "even wachten" }, 429, cors);
+  let body, result;
+  try {
+    body = await request.json();
+    result = clean(body && body.result);
+  } catch {
+    return reply({ error: "ongeldig" }, 400, cors);
+  }
+  const tekst = String((body && body.tekst) || "").trim();
+  if (tekst.length < 12 || tekst.length > 600) return reply({ error: "lengte" }, 400, cors);
+  if (env.DB) await keep(env.DB, tekst, result, "eenvoudige lezing");
+  return new Response(null, { status: 204, headers: cors });
 }
 
 // The match, computed from the factors: a weighted average mapped onto 45
@@ -155,11 +185,20 @@ function clean(o) {
   return { status: "ok", factors, service: SERVICES.includes(o.service) ? o.service : "kijken" };
 }
 
-async function keep(db, tekst, result) {
+async function keep(db, tekst, result, bron) {
   const ok = result.status === "ok";
-  await db.prepare("INSERT INTO antwoorden (tekst, status, score, dienst, factoren) VALUES (?, ?, ?, ?, ?)")
-    .bind(tekst, result.status, ok ? scoreOf(result.factors) : null, ok ? result.service : null, ok ? JSON.stringify(result.factors) : null)
+  await db.prepare("INSERT INTO antwoorden (tekst, status, score, dienst, factoren, vraag, bron) VALUES (?, ?, ?, ?, ?, ?, ?)")
+    .bind(tekst, result.status, ok ? scoreOf(result.factors) : null, ok ? result.service : null,
+      ok ? JSON.stringify(result.factors) : null, ok ? null : (result.vraag || null), bron || null)
     .run();
+}
+
+// The same verdict lines the page shows.
+function verdictOf(score) {
+  if (score >= 85) return "Dit is precies het soort werk waar AI tijd wint.";
+  if (score >= 70) return "Hier kan AI je duidelijk werk uit handen nemen.";
+  if (score >= 58) return "Op een paar plekken kan AI helpen.";
+  return "AI helpt hier maar een beetje. Vertel me gerust meer: vaak zit er meer in dan je denkt.";
 }
 
 /* ── Elias's overview ─────────────────────────────────────────── */
@@ -178,11 +217,12 @@ async function overview(request, env, url) {
     return Response.redirect(`${url.origin}/overzicht`, 303);
   }
 
-  const { results } = await env.DB.prepare("SELECT id, tijd, tekst, status, score, dienst, factoren FROM antwoorden ORDER BY id DESC LIMIT 1000").all();
+  const { results } = await env.DB.prepare("SELECT id, tijd, tekst, status, score, dienst, factoren, vraag, bron FROM antwoorden ORDER BY id DESC LIMIT 1000").all();
   if (url.pathname === "/overzicht.csv") {
-    const rows = [["tijd", "tekst", "status", "score", "dienst", "factoren"]].concat(results.map((r) => [
-      r.tijd, r.tekst, r.status, r.score == null ? "" : r.score, r.dienst || "",
-      parse(r.factoren).map((f) => `${f.name} ${f.rating}/3 (weegt ${f.weight})`).join("; ")
+    const rows = [["tijd", "tekst", "score", "oordeel of vraag", "dienst", "factoren", "redenen", "bron"]].concat(results.map((r) => [
+      r.tijd, r.tekst, r.score == null ? "vaag" : r.score, r.score == null ? (r.vraag || "") : verdictOf(r.score), SERVICE[r.dienst] || "",
+      parse(r.factoren).map((f) => `${f.name} ${f.rating}/3 (${WEIGHT[f.weight] || ""})`).join("; "),
+      parse(r.factoren).map((f) => f.reason).join(" | "), r.bron || ""
     ]));
     const csv = "﻿" + rows.map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\r\n");
     return new Response(csv, { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="klikt-het.csv"', "Cache-Control": "no-store" } });
@@ -213,11 +253,13 @@ function page(rows) {
   const mean = scored.length ? Math.round(scored.reduce((s, r) => s + r.score, 0) / scored.length) : null;
   const items = rows.map((r) => {
     const factors = parse(r.factoren).map((f) =>
-      `<li><span>${esc(f.name)} <em>${esc(WEIGHT[f.weight] || "")}</em></span><span class="knots" aria-label="${f.rating} van 3">${[1, 2, 3].map((i) => `<i class="${i <= f.rating ? "on" : ""}"></i>`).join("")}</span></li>`
+      `<li><div class="f"><span>${esc(f.name)} <em>${esc(WEIGHT[f.weight] || "")}</em></span><span class="knots" aria-label="${f.rating} van 3">${[1, 2, 3].map((i) => `<i class="${i <= f.rating ? "on" : ""}"></i>`).join("")}</span></div>${f.reason ? `<small>${esc(f.reason)}</small>` : ""}</li>`
     ).join("");
+    const said = r.score == null ? (r.vraag ? `Vertel iets meer: ${r.vraag}` : "Vertel iets meer") : `Het klikt voor ${r.score}%. ${verdictOf(r.score)}`;
     return `<article>
-      <header><time>${esc(when.format(new Date(r.tijd.replace(" ", "T") + "Z")))}</time><b>${r.score == null ? "vaag" : r.score + "%"}</b>${r.dienst ? `<span>${esc(SERVICE[r.dienst] || r.dienst)}</span>` : ""}</header>
+      <header><time>${esc(when.format(new Date(r.tijd.replace(" ", "T") + "Z")))}</time><b>${r.score == null ? "vaag" : r.score + "%"}</b>${r.dienst ? `<span>${esc(SERVICE[r.dienst] || r.dienst)}</span>` : ""}${r.bron ? `<span>${esc(r.bron)}</span>` : ""}</header>
       <p>${esc(r.tekst)}</p>
+      <p class="said">${esc(said)}</p>
       ${factors ? `<ul>${factors}</ul>` : ""}
       <form method="post" action="/overzicht/verwijder" onsubmit="return confirm('Dit antwoord wissen?')"><input type="hidden" name="id" value="${r.id}"><button>Wissen</button></form>
     </article>`;
@@ -235,8 +277,8 @@ article{border-top:1px solid var(--rule);padding:20px 0}article:last-child{borde
 header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;font-size:13px;color:var(--soft)}
 header b{font-weight:500;font-size:15px;color:var(--indigo);letter-spacing:.04em}
 article p{margin:8px 0 12px;max-width:65ch}
-ul{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:4px;max-width:420px}
-li{display:flex;justify-content:space-between;gap:16px;font-size:14px}li em{font-style:normal;color:var(--soft);font-size:12px}
+ul{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:10px;max-width:560px}
+li{font-size:14px}.f{display:flex;justify-content:space-between;gap:16px}li small{display:block;color:var(--soft);font-size:13px;line-height:1.5}.said{color:var(--indigo);font-size:14px;margin-top:-4px}li em{font-style:normal;color:var(--soft);font-size:12px}
 .knots{display:flex;gap:5px;align-items:center}.knots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--indigo)}.knots i.on{background:var(--indigo)}
 button{font:inherit;font-size:13px;color:var(--soft);background:none;border:1px solid var(--rule);padding:4px 10px;cursor:pointer}button:hover{color:var(--ink);border-color:var(--indigo)}
 .empty{color:var(--soft)}

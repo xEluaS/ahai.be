@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS antwoorden (
   status TEXT NOT NULL,
   score INTEGER,
   dienst TEXT,
-  factoren TEXT
+  factoren TEXT,
+  vraag TEXT,
+  bron TEXT
 );
 CREATE INDEX IF NOT EXISTS antwoorden_tijd ON antwoorden (tijd);

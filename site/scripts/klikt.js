@@ -33,6 +33,7 @@
   };
   var WEIGHT = { 1: "weegt licht", 2: "weegt gewoon", 3: "weegt zwaar" };
   var HUMAN = "Mens aan het stuur";
+  var ASK = "Welke mails, lijsten of documenten komen erbij kijken, en hoe vaak doe je het?";
 
   /* Generous but honest: the weighted average of the factors maps onto 45
      to 95. Nothing is a sure thing, so the match never reaches 100. The
@@ -111,7 +112,7 @@
     STEPS.forEach(function (s) { if (s[0].test(t)) steps.push(s[1]); });
     (t.match(WORDS.docs) || []).forEach(function (w) { w = SHOWN[w] || w; if (docs.indexOf(w) < 0) docs.push(w); });
     var cues = (freq ? 1 : 0) + docs.length + steps.length + (WORDS.digital.test(t) ? 1 : 0);
-    if (words < 5 || cues === 0) return { status: "vaag" };
+    if (words < 5 || cues === 0) return { status: "vaag", vraag: ASK };
 
     var r = {
       herhaling: WORDS.freq3.test(t) ? 3 : WORDS.freq2.test(t) ? 2 : 1,
@@ -151,7 +152,14 @@
     /* when the service is busy or away, the plain reading still answers */
     return fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tekst: text }) })
       .then(function (res) { if (!res.ok) throw new Error("status " + res.status); return res.json(); })
-      .catch(function () { return standIn(text); });
+      .catch(function () {
+        /* the plain reading is what the visitor sees, so it is kept too */
+        var result = standIn(text);
+        try {
+          fetch(new URL("bewaar", endpoint).href, { method: "POST", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tekst: text, result: result }) }).catch(function () {});
+        } catch (e) { /* keeping is never worth an error */ }
+        return result;
+      });
   }
 
   /* ── The reading ─────────────────────────────────────────────── */
@@ -176,7 +184,7 @@
     clear();
     if (!result || result.status !== "ok") {
       out.score.textContent = "Vertel iets meer";
-      out.verdict.textContent = (result && result.vraag) || "Welke mails, lijsten of documenten komen erbij kijken, en hoe vaak doe je het?";
+      out.verdict.textContent = (result && result.vraag) || ASK;
       out.mail.hidden = true;
       out.again.textContent = "Vul je beschrijving aan";
       keep = true;

@@ -16,6 +16,7 @@
     score: panel.querySelector("[data-score]"),
     verdict: panel.querySelector("[data-verdict]"),
     frame: panel.querySelector("[data-frame]"),
+    acts: panel.querySelector("#klikt-acties"),
     caption: panel.querySelector(".match__caption"),
     reasons: panel.querySelector("[data-reasons]"),
     fit: panel.querySelector("[data-fit]"),
@@ -123,28 +124,23 @@
       mens: WORDS.stakes.test(t) ? 1 : WORDS.check.test(t) ? 3 : 2
     };
     var step = steps.filter(Boolean)[0];
-    /* only what the description actually says becomes a factor */
-    var factors = [];
-    if (freq) factors.push({ name: "Herhaling", rating: r.herhaling, weight: 3, reason: r.herhaling >= 2
-      ? "Het komt " + freq + " terug: vaste stappen die een tool kan overnemen."
-      : "Ook als het niet vaak terugkomt, kan AI de voorbereiding versnellen." });
-    if (docs.length) factors.push({ name: "Tekst en documenten", rating: r.tekst, weight: 3,
-      reason: "Het draait om " + docs.slice(0, 2).join(" en ") + ": taal en documenten zijn waar AI het sterkst in is." });
-    if (steps.length) factors.push({ name: "Vast patroon", rating: r.patroon, weight: 2,
-      reason: step ? "Het " + step + " volgt een vast patroon, dus AI kan het grootste deel voorbereiden." : "Er zit een vast patroon in, dus AI kan het grootste deel voorbereiden." });
-    if (WORDS.digital.test(t) || WORDS.paper.test(t)) factors.push({ name: "Digitaal beschikbaar", rating: r.digitaal, weight: 2, reason: r.digitaal >= 3
-      ? "De informatie staat al digitaal, dus niets hoeft opnieuw getypt te worden."
-      : "Een deel staat nog op papier: dat eerst digitaal krijgen is al winst." });
-    factors.push({ name: HUMAN, rating: r.mens, weight: 2, reason: r.mens >= 3
-      ? "Jij kijkt het resultaat na voor het telt, dus je blijft zelf aan het stuur."
-      : r.mens <= 1
-        ? "Hier weegt elke fout zwaar, dus AI mag hier alleen voorbereiden, nooit beslissen."
-        : "Een mens kijkt het resultaat na voor het telt: zo blijf je zelf aan het stuur." });
-    return {
-      status: "ok",
-      factors: factors,
-      service: r.herhaling >= 2 && r.patroon >= 2 && r.digitaal >= 2 ? "bouwen" : r.tekst >= 2 && r.patroon <= 1 ? "uitleggen" : "kijken"
-    };
+    /* the same two measures the analysis service uses, and what Elias can do */
+    var easy = (docs.length ? 3 : 1) + (steps.length ? 3 : 1) + (r.digitaal >= 3 ? 3 : r.digitaal <= 1 ? 1 : 2);
+    var factors = [
+      { name: "Tijd die je terugwint", rating: r.herhaling, weight: 1, reason: freq
+        ? "Het komt " + freq + " terug, dus je wint elke keer opnieuw tijd."
+        : "Het komt niet vaak terug, dus de tijdwinst blijft eerder beperkt." },
+      { name: "Hoe goed AI dit al kan", rating: Math.round(easy / 3), weight: 1, reason: docs.length
+        ? "Werken met " + docs.slice(0, 2).join(" en ") + " kan AI vandaag al goed."
+        : "Het hangt af van hoe jullie werken, dus eerst even kijken." }
+    ];
+    var service = r.herhaling >= 2 && r.patroon >= 2 && r.digitaal >= 2 ? "bouwen" : r.tekst >= 2 && r.patroon <= 1 ? "uitleggen" : "kijken";
+    var acties = {
+      bouwen: ["Ik bouw een tool die het " + (step || "werk") + " voor je voorbereidt.", "Jij kijkt het resultaat na, de tool doet het herhaalwerk."],
+      uitleggen: ["Ik toon jullie welke AI-tools hier vandaag al helpen.", "Ik oefen met jullie op jullie eigen " + (docs[0] || "werk") + "."],
+      kijken: ["Ik kom kijken hoe jullie dit vandaag aanpakken.", "Ik zeg eerlijk waar AI hier tijd wint, en waar niet."]
+    }[service];
+    return { status: "ok", factors: factors, acties: acties, service: service };
   }
 
   function analyse(text) {
@@ -174,7 +170,7 @@
     [out.frame, out.reasons, out.fit].forEach(function (n) { n.textContent = ""; });
     out.verdict.textContent = "";
     /* empty blocks would still take up the grid's gaps */
-    [out.caption, out.reasons, out.fit].forEach(function (n) { n.hidden = true; });
+    [out.caption, out.acts, out.reasons, out.fit].forEach(function (n) { if (n) n.hidden = true; });
   }
   function meter(score, onStep) {
     var m = window.AhAi && window.AhAi.meter;
@@ -204,11 +200,12 @@
     meter(score, function (e) { count.textContent = String(Math.round(score * e)); });
 
     out.verdict.textContent = verdictOf(score);
-    [out.caption, out.reasons, out.fit].forEach(function (n) { n.hidden = false; });
+    [out.caption, out.acts, out.reasons, out.fit].forEach(function (n) { if (n) n.hidden = false; });
     /* each factor with how heavily it weighs, the heaviest first */
     /* each factor as a thread from "weinig" to "sterk", with its reason and
        how much it counts behind an info button, the heaviest first */
     var factors = heaviest(result.factors);
+    var weighted = factors.some(function (f) { return f.weight !== factors[0].weight; });
     factors.forEach(function (f, n) {
       var row = el("div"), dt = el("dt", null, f.name), dd = el("dd");
       var id = "klikt-uitleg-" + n, info = el("button", "match__info", "i"), tip = el("span", "match__tip");
@@ -218,7 +215,8 @@
       info.setAttribute("aria-expanded", "false");
       tip.id = id;
       tip.setAttribute("role", "tooltip");
-      tip.append(el("span", null, f.reason || ""), el("span", "match__tip-weight", "Deze factor " + (WEIGHT[f.weight] || "telt gewoon") + " voor jouw taak."));
+      tip.append(el("span", null, f.reason || ""));
+      if (weighted) tip.append(el("span", "match__tip-weight", "Deze factor " + (WEIGHT[f.weight] || "telt gewoon") + " voor jouw taak."));
       dt.append(info, tip);
       var track = el("span", "match__track"), fill = el("span", "match__fill");
       fill.style.width = Math.max(4, (f.rating / 3) * 100) + "%";
@@ -231,7 +229,7 @@
     ends.setAttribute("aria-hidden", "true");
     ends.append(el("span", null, "weinig"), el("span", null, "sterk"));
     out.frame.append(ends);
-    pick(result.factors).forEach(function (reason) { out.reasons.append(el("li", null, reason)); });
+    (result.acties && result.acties.length ? result.acties : pick(result.factors)).forEach(function (line) { out.reasons.append(el("li", null, line)); });
     var fit = SERVICES[result.service] || SERVICES.kijken, link = el("a", null, fit.name);
     link.href = fit.href;
     out.fit.append("Past het best bij: ", link);

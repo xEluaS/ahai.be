@@ -548,3 +548,4 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
     animation-iteration-count: 1 !important;
   }
 }
+.match__body .match__caption { margin: 0 0 calc(-1 * var(--s-3)); }

@@ -31,7 +31,8 @@
     kijken: { name: "Ik kom kijken", href: "#kijken" },
     bouwen: { name: "Ik bouw het", href: "#bouwen" }
   };
-  var WEIGHT = { 1: "weegt licht", 2: "weegt gewoon", 3: "weegt zwaar" };
+  var WEIGHT = { 1: "telt licht", 2: "telt gewoon", 3: "telt zwaar" };
+  var LEVEL = { 0: "niet gunstig", 1: "een beetje gunstig", 2: "duidelijk gunstig", 3: "sterk gunstig" };
   var HUMAN = "Mens aan het stuur";
   var ASK = "Welke mails, lijsten of documenten komen erbij kijken, en hoe vaak doe je het?";
 
@@ -205,14 +206,31 @@
     out.verdict.textContent = verdictOf(score);
     [out.caption, out.reasons, out.fit].forEach(function (n) { n.hidden = false; });
     /* each factor with how heavily it weighs, the heaviest first */
-    heaviest(result.factors).forEach(function (f) {
-      var row = el("div"), dt = el("dt", null, f.name + " "), dd = el("dd");
-      dt.append(el("span", "match__weight", WEIGHT[f.weight] || ""));
+    /* each factor as a thread from "weinig" to "sterk", with its reason and
+       how much it counts behind an info button, the heaviest first */
+    var factors = heaviest(result.factors);
+    factors.forEach(function (f, n) {
+      var row = el("div"), dt = el("dt", null, f.name), dd = el("dd");
+      var id = "klikt-uitleg-" + n, info = el("button", "match__info", "i"), tip = el("span", "match__tip");
+      info.type = "button";
+      info.setAttribute("aria-label", "Meer over " + f.name);
+      info.setAttribute("aria-describedby", id);
+      info.setAttribute("aria-expanded", "false");
+      tip.id = id;
+      tip.setAttribute("role", "tooltip");
+      tip.append(el("span", null, f.reason || ""), el("span", "match__tip-weight", "Deze factor " + (WEIGHT[f.weight] || "telt gewoon") + " voor jouw taak."));
+      dt.append(info, tip);
+      var track = el("span", "match__track"), fill = el("span", "match__fill");
+      fill.style.width = Math.max(4, (f.rating / 3) * 100) + "%";
+      track.append(fill);
+      dd.append(track, el("span", "sr-only", LEVEL[f.rating] || ""));
       row.append(dt, dd);
-      for (var i = 1; i <= 3; i++) dd.append(el("span", i <= f.rating ? "is-on" : null));
-      dd.append(el("span", "sr-only", f.rating + " van 3"));
       out.frame.append(row);
     });
+    var ends = el("div", "match__ends");
+    ends.setAttribute("aria-hidden", "true");
+    ends.append(el("span", null, "weinig"), el("span", null, "sterk"));
+    out.frame.append(ends);
     pick(result.factors).forEach(function (reason) { out.reasons.append(el("li", null, reason)); });
     var fit = SERVICES[result.service] || SERVICES.kijken, link = el("a", null, fit.name);
     link.href = fit.href;
@@ -232,6 +250,23 @@
     out.mail.hidden = false;
     meter(null);
   }
+
+  /* The info bubbles: they open on hover and focus; a tap toggles them,
+     for phones, and Escape or a tap elsewhere closes them. */
+  function closeTips(except) {
+    out.frame.querySelectorAll(".match__info[aria-expanded='true']").forEach(function (b) {
+      if (b !== except) b.setAttribute("aria-expanded", "false");
+    });
+  }
+  out.frame.addEventListener("click", function (ev) {
+    var b = ev.target.closest(".match__info");
+    if (!b) return;
+    var open = b.getAttribute("aria-expanded") !== "true";
+    closeTips(b);
+    b.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  document.addEventListener("click", function (ev) { if (!ev.target.closest(".match__info")) closeTips(null); });
+  document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") closeTips(null); });
 
   /* ── The form ────────────────────────────────────────────────── */
   /* The field is as tall as its text, or, while empty, as its example:

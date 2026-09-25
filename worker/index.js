@@ -68,12 +68,15 @@ export default {
     }
     if (url.pathname === "/api/bewaar" || url.pathname === "/bewaar") return keepFallback(request, env);
     if (url.pathname === "/api/klikt") return analyse(request, env, ctx);
+    if (url.pathname === "/api/bericht") return message(request, env);
     // everything else is the website itself
     if (env.ASSETS) return env.ASSETS.fetch(request);
     return analyse(request, env, ctx);
   },
   async scheduled(event, env) {
-    if (env.DB) await env.DB.prepare(`DELETE FROM antwoorden WHERE tijd < datetime('now', '-${KEEP_DAYS} days')`).run();
+    if (!env.DB) return;
+    await env.DB.prepare(`DELETE FROM antwoorden WHERE tijd < datetime('now', '-${KEEP_DAYS} days')`).run();
+    await env.DB.prepare(`DELETE FROM berichten WHERE tijd < datetime('now', '-${KEEP_DAYS} days')`).run();
   }
 };
 
@@ -209,6 +212,24 @@ function verdictOf(score) {
   return "AI helpt hier maar een beetje. Vertel me gerust meer: vaak zit er meer in dan je denkt.";
 }
 
+/* ── The contact form ───────────────────────────────────────────── */
+async function message(request, env) {
+  const { allowed, cors } = corsFor(request);
+  if (request.method === "OPTIONS") return new Response(null, { headers: cors });
+  if (request.method !== "POST" || !allowed) return reply({ error: "niet toegestaan" }, 403, cors);
+  if (await limited(request, env)) return reply({ error: "even wachten" }, 429, cors);
+  let body;
+  try { body = await request.json(); } catch { return reply({ error: "ongeldig" }, 400, cors); }
+  const field = (v, max) => String(v || "").replace(/<[^>]*>/g, "").trim().slice(0, max);
+  const naam = field(body && body.naam, 120), contact = field(body && body.contact, 160), vraag = field(body && body.vraag, 2000);
+  // a filled-in hidden field means a bot: answer as if all went well
+  if (body && body.website) return new Response(null, { status: 204, headers: cors });
+  if (!naam || !contact || vraag.length < 3) return reply({ error: "onvolledig" }, 400, cors);
+  if (!env.DB) return reply({ error: "geen databank" }, 500, cors);
+  await env.DB.prepare("INSERT INTO berichten (naam, contact, vraag) VALUES (?, ?, ?)").bind(naam, contact, vraag).run();
+  return new Response(null, { status: 204, headers: cors });
+}
+
 /* ── Elias's overview ─────────────────────────────────────────── */
 async function overview(request, env, url) {
   if (!env.OVERZICHT_WACHTWOORD || !authorised(request, env.OVERZICHT_WACHTWOORD)) {
@@ -221,7 +242,8 @@ async function overview(request, env, url) {
     if (request.method !== "POST" || request.headers.get("Origin") !== url.origin) return new Response("Niet toegestaan", { status: 403 });
     const form = await request.formData();
     const id = Number(form.get("id"));
-    if (Number.isInteger(id)) await env.DB.prepare("DELETE FROM antwoorden WHERE id = ?").bind(id).run();
+    const table = form.get("soort") === "bericht" ? "berichten" : "antwoorden";
+    if (Number.isInteger(id)) await env.DB.prepare(`DELETE FROM ${table} WHERE id = ?`).bind(id).run();
     return Response.redirect(`${url.origin}/overzicht`, 303);
   }
 
@@ -235,7 +257,8 @@ async function overview(request, env, url) {
     const csv = "﻿" + rows.map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\r\n");
     return new Response(csv, { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="klikt-het.csv"', "Cache-Control": "no-store" } });
   }
-  return new Response(page(results), { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
+  const messages = (await env.DB.prepare("SELECT id, tijd, naam, contact, vraag FROM berichten ORDER BY id DESC LIMIT 500").all()).results;
+  return new Response(page(results, messages), { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
 }
 
 function authorised(request, password) {
@@ -255,7 +278,7 @@ function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => (
 const WEIGHT = { 1: "weegt licht", 2: "weegt gewoon", 3: "weegt zwaar" };
 const SERVICE = { uitleggen: "Ik leg het uit", kijken: "Ik kom kijken", bouwen: "Ik bouw het" };
 
-function page(rows) {
+function page(rows, messages) {
   const when = new Intl.DateTimeFormat("nl-BE", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Brussels" });
   const scored = rows.filter((r) => r.score != null);
   const mean = scored.length ? Math.round(scored.reduce((s, r) => s + r.score, 0) / scored.length) : null;
@@ -292,7 +315,14 @@ li{font-size:14px}.f{display:flex;justify-content:space-between;gap:16px}li smal
 button{font:inherit;font-size:13px;color:var(--soft);background:none;border:1px solid var(--rule);padding:4px 10px;cursor:pointer}button:hover{color:var(--ink);border-color:var(--indigo)}
 .empty{color:var(--soft)}
 </style></head><body><main>
-<h1>Klikt het?</h1>
+<h1>Berichten</h1>
+<p class="meta"><span>${messages.length} ${messages.length === 1 ? "bericht" : "berichten"} uit het contactformulier</span></p>
+${messages.map((m) => `<article>
+      <header><time>${esc(when.format(new Date(m.tijd.replace(" ", "T") + "Z")))}</time><b>${esc(m.naam)}</b><span>${esc(m.contact)}</span></header>
+      <p>${esc(m.vraag)}</p>
+      <form method="post" action="/overzicht/verwijder" onsubmit="return confirm('Dit bericht wissen?')"><input type="hidden" name="id" value="${m.id}"><input type="hidden" name="soort" value="bericht"><button>Wissen</button></form>
+    </article>`).join("") || '<p class="empty">Nog geen berichten.</p>'}
+<h1 style="margin-top:64px">Klikt het?</h1>
 <p class="meta"><span>${rows.length} ${rows.length === 1 ? "antwoord" : "antwoorden"}</span>${mean == null ? "" : `<span>gemiddeld ${mean}%</span>`}<span>ouder dan twaalf maanden wordt gewist</span><a href="/overzicht.csv">Download als CSV</a></p>
 ${items || '<p class="empty">Nog geen antwoorden.</p>'}
 </main></body></html>`;

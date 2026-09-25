@@ -266,6 +266,15 @@
   document.addEventListener("click", function (ev) { if (!ev.target.closest(".match__info")) closeTips(null); });
   document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") closeTips(null); });
 
+  /* The example chips fill in a task and ask straight away. */
+  form.querySelectorAll("[data-voorbeeld]").forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      field.value = chip.getAttribute("data-voorbeeld");
+      grow();
+      form.requestSubmit();
+    });
+  });
+
   /* ── The form ────────────────────────────────────────────────── */
   /* The field is as tall as its text, or, while empty, as its example:
      where the example wraps, the field shows both lines. */

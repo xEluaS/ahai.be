@@ -12,3 +12,12 @@ CREATE TABLE IF NOT EXISTS antwoorden (
   acties TEXT
 );
 CREATE INDEX IF NOT EXISTS antwoorden_tijd ON antwoorden (tijd);
+
+-- Messages from the contact form.
+CREATE TABLE IF NOT EXISTS berichten (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tijd TEXT NOT NULL DEFAULT (datetime('now')),
+  naam TEXT NOT NULL,
+  contact TEXT NOT NULL,
+  vraag TEXT NOT NULL
+);

@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="styles/site.css">
 <script src="scripts/canopy.js" defer></script>
 <script src="scripts/klikt.js" defer></script>
+<script src="scripts/contact.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#inhoud">Naar de inhoud</a>
@@ -74,6 +75,12 @@
             Klikt het?
             <svg viewBox="0 0 18 12" fill="none" aria-hidden="true"><path d="M1 6h15M11.5 1.5 16 6l-4.5 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="square"/></svg>
           </button>
+        </div>
+        <div class="klikt__chips" role="group" aria-label="Voorbeelden om te proberen">
+          <span class="klikt__try">Probeer:</span>
+          <button type="button" class="chip" data-voorbeeld="Elke week zet ik bestellingen uit mails in een Excel-lijst.">Bestellingen uit mails</button>
+          <button type="button" class="chip" data-voorbeeld="Ik maak elke maand het rooster voor ons team, met ieders wensen en verlof.">Het maandrooster</button>
+          <button type="button" class="chip" data-voorbeeld="Ik wil een website voor mijn zaak, maar weet niet waar te beginnen.">Een website</button>
         </div>
         <p class="klikt__hint" id="klikt-hint">Geen namen of persoonsgegevens. <a href="privacy.html">Privacy</a></p>
         <p class="klikt__fout" id="klikt-fout" hidden></p>
@@ -217,8 +224,10 @@
     <div class="wrap">
       <div class="who">
         <figure class="portrait">
-          <svg aria-hidden="true" focusable="false"></svg>
-          <figcaption class="tag label">Portret volgt</figcaption>
+          <picture>
+            <source srcset="images/elias-cappon.webp" type="image/webp">
+            <img src="images/elias-cappon.jpg" width="1000" height="1250" loading="lazy" decoding="async" alt="Elias Cappon, glimlachend in een lichte werkruimte met een whiteboard vol post-its.">
+          </picture>
         </figure>
         <div class="who__text">
           <h2 id="wie-title" class="display">Elias Cappon</h2>
@@ -230,9 +239,17 @@
           </dl>
           <div class="practice">
             <h3 class="label">Uit de praktijk</h3>
+            <article class="case">
+              <h4>Workshop "AI in je onderwijspraktijk", VIVES</h4>
+              <p>Docenten wilden weten hoe AI hun lesvoorbereiding kan versnellen zonder hun eigen materiaal los te laten. We werkten met NotebookLM op hun eigen lessen: samenvattingen, flashcards, quizzen en presentaties. 31 deelnemers gaven feedback: 20 noemden de workshop uit zichzelf nuttig of interessant, en NotebookLM werd het vaakst genoemd als meest bruikbaar.</p>
+              <blockquote class="case__quote">
+                <p>Heel interessant en meteen toepasbaar.</p>
+                <p>Rustig en gestructureerd en duidelijk.</p>
+                <footer>Deelnemers aan de workshop, mei 2026</footer>
+              </blockquote>
+            </article>
             <ul>
               <li>Roosters voor verpleegkundigen, mee opgebouwd met AI.</li>
-              <li>Workshop AI-tools voor leerkrachten secundair onderwijs.</li>
               <li>Binnenkort: een introductie voor ziekenhuisartsen.</li>
             </ul>
           </div>
@@ -257,7 +274,19 @@
               <svg viewBox="0 0 18 12" fill="none" aria-hidden="true"><path d="M1 6h15M11.5 1.5 16 6l-4.5 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="square"/></svg>
             </a>
           </div>
-          <p class="contact__plain">Of rechtstreeks naar <a class="mailto" href="mailto:elias@ahai.be?subject=Kennismaking">elias@ahai.be</a></p>
+          <p class="contact__plain">Of rechtstreeks naar <a class="mailto" href="mailto:elias@ahai.be?subject=Kennismaking">elias@ahai.be</a> <button type="button" class="copy" data-copy="elias@ahai.be">Kopieer</button></p>
+          <form class="bericht" id="bericht" novalidate>
+            <h3 class="label">Of laat een bericht achter</h3>
+            <label for="bericht-naam">Naam</label>
+            <input id="bericht-naam" name="naam" autocomplete="name" maxlength="120" required>
+            <label for="bericht-contact">E-mail of telefoon</label>
+            <input id="bericht-contact" name="contact" autocomplete="email" maxlength="160" required>
+            <label for="bericht-vraag">Waar zit je team mee?</label>
+            <textarea id="bericht-vraag" name="vraag" rows="4" maxlength="2000" required></textarea>
+            <p class="bericht__val" aria-hidden="true"><label>Laat dit leeg <input name="website" tabindex="-1" autocomplete="off"></label></p>
+            <button class="btn btn--ghost" type="submit">Verstuur</button>
+            <p class="bericht__status" role="status" hidden></p>
+          </form>
         </div>
         <p class="closing" aria-hidden="true"><span class="mark" data-mark><span>AhA</span><svg class="mark__i" viewBox="0 0 242 766" focusable="false"><rect class="mark__stem" x="96" y="230" width="50" height="520"/><circle class="mark__dot" cx="121" cy="76" r="45.5"/></svg></span></p>
       </div>

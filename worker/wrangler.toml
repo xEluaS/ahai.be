@@ -11,7 +11,7 @@ GEMINI_MODEL = "gemini-flash-latest"
 [[d1_databases]]
 binding = "DB"
 database_name = "ahai-klikt"
-database_id = "VUL-IN-NA-D1-CREATE"
+database_id = "0476351a-691c-413f-b3bd-d5b2dd46b743"
 
 # At most ten analyses per visitor per minute.
 [[ratelimits]]

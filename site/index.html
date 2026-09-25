@@ -274,7 +274,7 @@
               <svg viewBox="0 0 18 12" fill="none" aria-hidden="true"><path d="M1 6h15M11.5 1.5 16 6l-4.5 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="square"/></svg>
             </a>
           </div>
-          <p class="contact__plain">Of rechtstreeks naar <a class="mailto" href="mailto:elias@ahai.be?subject=Kennismaking">elias@ahai.be</a> <button type="button" class="copy" data-copy="elias@ahai.be">Kopieer</button></p>
+          <p class="contact__plain">Of rechtstreeks naar <a class="mailto" href="mailto:elias@ahai.be?subject=Kennismaking">elias@ahai.be</a> <button type="button" class="copy" data-copy="elias@ahai.be" aria-label="Kopieer het e-mailadres"><span class="copy__to" aria-hidden="true">Kopieer</span><span class="copy__done" aria-hidden="true">Gekopieerd</span></button><span class="sr-only" role="status" data-copy-status></span></p>
           <form class="bericht" id="bericht" novalidate>
             <h3 class="label">Of laat een bericht achter</h3>
             <label for="bericht-naam">Naam</label>
@@ -285,7 +285,7 @@
             <textarea id="bericht-vraag" name="vraag" rows="4" maxlength="2000" required></textarea>
             <p class="bericht__val" aria-hidden="true"><label>Laat dit leeg <input name="website" tabindex="-1" autocomplete="off"></label></p>
             <button class="btn btn--ghost" type="submit">Verstuur</button>
-            <p class="bericht__status" role="status" hidden></p>
+            <p class="bericht__status" role="status" hidden><span class="mark" data-mark aria-hidden="true" hidden><span>AhA</span><svg class="mark__i" viewBox="0 0 259 766" focusable="false"><rect class="mark__stem" x="93" y="228" width="75" height="522"/><circle class="mark__dot" cx="130.5" cy="60.5" r="56"/></svg></span><span data-status-text></span></p>
           </form>
         </div>
         <p class="closing" aria-hidden="true"><span class="mark" data-mark><span>AhA</span><svg class="mark__i" viewBox="0 0 242 766" focusable="false"><rect class="mark__stem" x="96" y="230" width="50" height="520"/><circle class="mark__dot" cx="121" cy="76" r="45.5"/></svg></span></p>

@@ -762,7 +762,8 @@
   function meter() {
     var svg = document.querySelector(".match__silk svg");
     if (!svg) return null;
-    var silk = null, g = null, ratio = 0, raf = 0;
+    /* lean: 0 to 1, how far the waiting strands have drawn towards the blue */
+    var silk = null, g = null, ratio = 0, lean = 0, raf = 0;
     function smooth(e0, e1, x) { var t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); }
     function wrapAt(x) {
       var f = g.x0 + (g.xR - g.x0) * ratio;
@@ -772,7 +773,7 @@
     function theta(x) { return (2 * Math.PI * (x - g.x0)) / g.P; }
     /* sign -1 is expertise, above the blue; sign +1 is AI, below it */
     function strandY(sign, x) {
-      var lane = g.cy + sign * g.S, helix = g.cy + sign * g.A * Math.cos(theta(x));
+      var lane = g.cy + sign * (g.S - lean * g.lean), helix = g.cy + sign * g.A * Math.cos(theta(x));
       return lane + (helix - lane) * wrapAt(x);
     }
     /* A ribbon wound around the blue faces you in front and behind, and
@@ -783,7 +784,7 @@
       silk.size();
       var W = silk.W, H = silk.H, narrow = narrowQuery.matches;
       var inset = narrow ? 24 : Math.max(28, (W - 1240) / 2 + 72);
-      g = { cy: H / 2, wI: H * 0.26, wS: H * 0.16, A: H * 0.24, S: H * 0.36, P: H * (narrow ? 1.7 : 2.4), xL: -0.02 * W, xR: 1.02 * W };
+      g = { cy: H / 2, wI: H * 0.26, wS: H * 0.16, A: H * 0.24, S: H * 0.36, P: H * (narrow ? 1.7 : 2.4), xL: -0.02 * W, xR: 1.02 * W, lean: H * 0.04 };
       /* the strands run straight past their tags before they start to turn */
       g.x0 = inset + (narrow ? 112 : 150) + g.P / 4;
       /* half-turn boundaries: there both strands are furthest from the blue */
@@ -819,21 +820,41 @@
       silk.ribbons.forEach(function (r) { r.a = r.fn(0); r.b = r.fn(1); });
       silk.draw();
     }
+    /* the strip may have changed size while it was hidden */
+    function fresh() {
+      if (!silk || Math.abs(svg.getBoundingClientRect().width - silk.W) > 1) build();
+    }
     return {
-      /* null lets the strands wait beside your work; a score winds them in */
+      /* null lets the strands wait beside your work; a score winds them in.
+         Strands still drawn in by waiting settle back as they go. */
       show: function (score, onStep) {
-        /* the strip may have changed size while it was hidden */
-        if (!silk || Math.abs(svg.getBoundingClientRect().width - silk.W) > 1) build();
+        fresh();
         cancelAnimationFrame(raf);
-        var to = score == null ? 0 : Math.max(0, Math.min(1, score / 100)), from = ratio, t0 = 0;
-        if (reduce.matches || score == null) { ratio = to; draw(); if (onStep) onStep(1); return; }
+        var to = score == null ? 0 : Math.max(0, Math.min(1, score / 100)), from = ratio, lean0 = lean, t0 = 0;
+        var span = score == null ? 400 : 1600;
+        if (reduce.matches || (score == null && !lean0)) { ratio = to; lean = 0; draw(); if (onStep) onStep(1); return; }
         raf = requestAnimationFrame(function step(now) {
           if (!t0) t0 = now;
-          var t = Math.min(1, (now - t0) / 1600), e = 1 - Math.pow(1 - t, 3);
+          var t = Math.min(1, (now - t0) / span), e = 1 - Math.pow(1 - t, 3);
           ratio = from + (to - from) * e;
+          lean = lean0 * (1 - e);
           draw();
           if (onStep) onStep(e);
-          if (t < 1) raf = requestAnimationFrame(step);
+          raf = t < 1 ? requestAnimationFrame(step) : 0;
+        });
+      },
+      /* While the answer is on its way, expertise and AI draw towards your
+         work and back, once every 1200ms, until show() takes over. */
+      wait: function () {
+        if (reduce.matches) return;
+        fresh();
+        cancelAnimationFrame(raf);
+        var t0 = 0;
+        raf = requestAnimationFrame(function step(now) {
+          if (!t0) t0 = now;
+          lean = 0.5 - 0.5 * Math.cos((2 * Math.PI * (now - t0)) / 1200);
+          draw();
+          raf = requestAnimationFrame(step);
         });
       },
       layout: function () {

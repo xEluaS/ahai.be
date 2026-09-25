@@ -169,6 +169,7 @@
   function clear() {
     [out.frame, out.reasons, out.fit].forEach(function (n) { n.textContent = ""; });
     out.verdict.textContent = "";
+    out.frame.classList.remove("is-grown");
     /* empty blocks would still take up the grid's gaps */
     [out.caption, out.acts, out.reasons, out.fit].forEach(function (n) { if (n) n.hidden = true; });
   }
@@ -176,6 +177,29 @@
     var m = window.AhAi && window.AhAi.meter;
     if (m) m.show(score, onStep);
     else if (onStep) onStep(1);
+  }
+  function waiting() {
+    var m = window.AhAi && window.AhAi.meter;
+    if (m && m.wait) m.wait();
+  }
+  /* The reading settles in once the answer is there: verdict and threads
+     first, then the actions one by one, then the way on. */
+  function enter() {
+    var order = [out.verdict, out.caption, out.frame, out.acts];
+    out.reasons.querySelectorAll("li").forEach(function (li) { order.push(li); });
+    order.push(out.fit, out.again.parentNode);
+    var step = 0;
+    order.forEach(function (n, i) {
+      if (!n || n.hidden) return;
+      if (i > 3) step++;
+      n.setAttribute("data-enter", "");
+      n.style.setProperty("--i", step);
+    });
+    inner.classList.add("is-before");
+    void inner.offsetWidth;
+    inner.classList.remove("is-before");
+    /* the threads grow with the meter */
+    out.frame.classList.add("is-grown");
   }
   function render(text, result) {
     clear();
@@ -186,6 +210,7 @@
       out.again.textContent = "Vul je beschrijving aan";
       keep = true;
       meter(null);
+      enter();
       return;
     }
     out.again.textContent = "Probeer een andere taak";
@@ -238,6 +263,7 @@
       "\n\nHet klikte voor " + score + "%. Kunnen we eens bekijken wat AI hier kan doen?\n";
     out.mail.href = "mailto:elias@ahai.be?subject=" + encodeURIComponent("Klikt het? " + score + "%") + "&body=" + encodeURIComponent(body);
     out.mail.hidden = false;
+    enter();
   }
 
   function fail() {
@@ -247,6 +273,7 @@
     out.mail.href = "mailto:elias@ahai.be?subject=" + encodeURIComponent("Klikt het?");
     out.mail.hidden = false;
     meter(null);
+    enter();
   }
 
   /* The info bubbles: they open on hover and focus; a tap toggles them,
@@ -318,6 +345,7 @@
     panel.hidden = false;
     inner.setAttribute("aria-busy", "true");
     meter(null);
+    waiting();
     panel.scrollIntoView({ behavior: reduce.matches ? "auto" : "smooth", block: "start" });
     analyse(text).then(function (result) { render(text, result); }, fail).then(function () {
       busy = false;
@@ -325,12 +353,23 @@
       out.score.focus({ preventScroll: true });
     });
   });
+  /* the reading fades out first; only then does the panel close and the
+     page scroll back to the field */
+  var leaving = 0;
   out.again.addEventListener("click", function () {
-    panel.hidden = true;
-    /* a vague description is kept, so it can be added to */
-    if (!keep) field.value = "";
-    grow();
-    field.focus({ preventScroll: true });
-    form.scrollIntoView({ behavior: reduce.matches ? "auto" : "smooth", block: "center" });
+    if (leaving) return;
+    panel.classList.add("is-leaving");
+    leaving = setTimeout(function () {
+      leaving = 0;
+      /* a wait still running stops here, while the strip can be measured */
+      if (busy) meter(null);
+      panel.hidden = true;
+      panel.classList.remove("is-leaving");
+      /* a vague description is kept, so it can be added to */
+      if (!keep) field.value = "";
+      grow();
+      field.focus({ preventScroll: true });
+      form.scrollIntoView({ behavior: reduce.matches ? "auto" : "smooth", block: "center" });
+    }, reduce.matches ? 0 : 150);
   });
 })();

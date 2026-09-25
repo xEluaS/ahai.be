@@ -2,6 +2,12 @@ name = "ahai-klikt"
 main = "index.js"
 compatibility_date = "2026-09-01"
 
+# ahai.be and www both serve the site from this Worker.
+routes = [
+  { pattern = "ahai.be", custom_domain = true },
+  { pattern = "www.ahai.be", custom_domain = true }
+]
+
 # The website itself; the Worker answers only the analysis and the overview.
 [assets]
 directory = "../site"

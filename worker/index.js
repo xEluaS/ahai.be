@@ -90,17 +90,29 @@ async function analyse(request, env, ctx) {
   const tekst = String((body && body.tekst) || "").trim();
   if (tekst.length < 12 || tekst.length > 600) return reply({ error: "lengte" }, 400, cors);
 
-  const model = env.GEMINI_MODEL || "gemini-flash-latest";
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: PROMPT }] },
-      contents: [{ role: "user", parts: [{ text: `<taak>${tekst}</taak>` }] }],
-      generationConfig: { temperature: 0.2, responseMimeType: "application/json", responseSchema: SCHEMA }
-    })
-  });
-  if (!res.ok) return reply({ error: "model" }, 502, cors);
+  // The free models are sometimes busy: try the chosen one twice, then the
+  // lighter Flash models, before giving up.
+  const first = env.GEMINI_MODEL || "gemini-flash-latest";
+  const models = [first, first, "gemini-flash-lite-latest", "gemini-2.5-flash"];
+  let res = null;
+  for (let i = 0; i < models.length; i++) {
+    if (i === 1) await new Promise((ok) => setTimeout(ok, 800));
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${models[i]}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: PROMPT }] },
+        contents: [{ role: "user", parts: [{ text: `<taak>${tekst}</taak>` }] }],
+        generationConfig: { temperature: 0.2, responseMimeType: "application/json", responseSchema: SCHEMA }
+      })
+    });
+    if (res.ok) break;
+    // Google's own error message only, never the visitor's text.
+    const detail = await res.text().catch(() => "");
+    console.error("gemini", models[i], res.status, detail.slice(0, 300));
+    if (![429, 500, 503, 404].includes(res.status)) break;
+  }
+  if (!res || !res.ok) return reply({ error: "model" }, 502, cors);
 
   let result;
   try {

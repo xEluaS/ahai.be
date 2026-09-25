@@ -148,8 +148,10 @@
   function analyse(text) {
     var endpoint = form.getAttribute("data-endpoint");
     if (!endpoint) return Promise.resolve(standIn(text));
+    /* when the service is busy or away, the plain reading still answers */
     return fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tekst: text }) })
-      .then(function (res) { if (!res.ok) throw new Error("status " + res.status); return res.json(); });
+      .then(function (res) { if (!res.ok) throw new Error("status " + res.status); return res.json(); })
+      .catch(function () { return standIn(text); });
   }
 
   /* ── The reading ─────────────────────────────────────────────── */

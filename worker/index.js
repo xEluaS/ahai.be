@@ -1,12 +1,14 @@
 // AhAi: the "Klikt het?" analysis service, a Cloudflare Worker.
 //
-// POST /           rate a task: Gemini chooses the factors that matter for
+// POST /api/klikt  rate a task: Gemini chooses the factors that matter for
 //                  this task, rates and weighs them and writes the reasons;
 //                  the match is computed here and on the page from those
 //                  factors, never taken from the model.
+// POST /api/bewaar keep the page's own reading when Gemini could not answer.
 // GET  /overzicht  Elias's private overview of what visitors asked
 //                  (password protected), with /overzicht.csv as a download.
 // cron             answers older than twelve months are deleted.
+// anything else    the website, served from ../site
 //
 // Answers are kept without name, IP address or cookies.
 
@@ -14,6 +16,7 @@ const ALLOWED = [
   "https://ahai.be",
   "https://www.ahai.be",
   "https://xeluas.github.io",
+  "https://ahai-klikt.elias-cappon.workers.dev",
   "http://localhost:4410"
 ];
 const SERVICES = ["uitleggen", "kijken", "bouwen"];
@@ -67,7 +70,10 @@ export default {
     if (url.pathname === "/overzicht" || url.pathname === "/overzicht.csv" || url.pathname === "/overzicht/verwijder") {
       return overview(request, env, url);
     }
-    if (url.pathname === "/bewaar") return keepFallback(request, env);
+    if (url.pathname === "/api/bewaar" || url.pathname === "/bewaar") return keepFallback(request, env);
+    if (url.pathname === "/api/klikt") return analyse(request, env, ctx);
+    // everything else is the website itself
+    if (env.ASSETS) return env.ASSETS.fetch(request);
     return analyse(request, env, ctx);
   },
   async scheduled(event, env) {

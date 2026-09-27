@@ -35,8 +35,9 @@
   function laneFor(hash) {
     return lanes.filter(function (l) { return "#" + l.id === hash; })[0];
   }
+  /* all bands start closed, unless the address points at one */
   var first = laneFor(location.hash);
-  open(first || lanes[0], true);
+  open(first || null, true);
   if (first) first.scrollIntoView({ block: "start" });
   window.addEventListener("hashchange", function () {
     var lane = laneFor(location.hash);

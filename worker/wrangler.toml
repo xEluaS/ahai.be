@@ -31,6 +31,14 @@ name = "LIMITER"
 namespace_id = "1001"
 simple = { limit = 10, period = 60 }
 
+# A mail to Elias for every message from the contact form. It can only
+# ever go to his own, verified address, from the meld.ahai.be subdomain,
+# so the Combell mail records on ahai.be itself stay untouched.
+[[send_email]]
+name = "MELDING"
+destination_address = "elias@ahai.be"
+allowed_sender_addresses = ["website@meld.ahai.be"]
+
 # Every night, answers older than twelve months are deleted.
 [triggers]
 crons = ["0 3 * * *"]

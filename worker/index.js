@@ -5,6 +5,10 @@
 //                  the match is computed here and on the page from those
 //                  factors, never taken from the model.
 // POST /api/bewaar keep the page's own reading when Gemini could not answer.
+// POST /api/bericht keep a message from the contact form, and mail Elias
+//                  that it arrived (Cloudflare Email Service, from meld.ahai.be).
+//                  Uses of the tool are mailed too, unless they are one of the
+//                  site's own examples.
 // GET  /overzicht  Elias's private overview of what visitors asked
 //                  (password protected), with /overzicht.csv as a download.
 // cron             answers older than twelve months are deleted.
@@ -66,9 +70,9 @@ export default {
     if (url.pathname === "/overzicht" || url.pathname === "/overzicht.csv" || url.pathname === "/overzicht/verwijder") {
       return overview(request, env, url);
     }
-    if (url.pathname === "/api/bewaar" || url.pathname === "/bewaar") return keepFallback(request, env);
+    if (url.pathname === "/api/bewaar" || url.pathname === "/bewaar") return keepFallback(request, env, ctx);
     if (url.pathname === "/api/klikt") return analyse(request, env, ctx);
-    if (url.pathname === "/api/bericht") return message(request, env);
+    if (url.pathname === "/api/bericht") return message(request, env, ctx);
     // everything else is the website itself
     if (env.ASSETS) return env.ASSETS.fetch(request);
     return analyse(request, env, ctx);
@@ -145,12 +149,13 @@ async function analyse(request, env, ctx) {
   }
   // Keeping the answer never delays it.
   if (env.DB) ctx.waitUntil(keep(env.DB, tekst, result, used).catch(() => {}));
+  if (env.MELDING && !isExample(tekst)) ctx.waitUntil(tellUse(env, tekst, result, used));
   return reply(result, 200, cors);
 }
 
 // When Gemini could not answer, the page shows its own plain reading and
 // sends it here, so the overview holds everything visitors were shown.
-async function keepFallback(request, env) {
+async function keepFallback(request, env, ctx) {
   const { allowed, cors } = corsFor(request);
   if (request.method === "OPTIONS") return new Response(null, { headers: cors });
   if (request.method !== "POST" || !allowed) return reply({ error: "niet toegestaan" }, 403, cors);
@@ -165,6 +170,7 @@ async function keepFallback(request, env) {
   const tekst = String((body && body.tekst) || "").trim();
   if (tekst.length < 12 || tekst.length > 600) return reply({ error: "lengte" }, 400, cors);
   if (env.DB) await keep(env.DB, tekst, result, "eenvoudige lezing");
+  if (env.MELDING && !isExample(tekst)) ctx.waitUntil(tellUse(env, tekst, result, "eenvoudige lezing"));
   return new Response(null, { status: 204, headers: cors });
 }
 
@@ -213,7 +219,7 @@ function verdictOf(score) {
 }
 
 /* ── The contact form ───────────────────────────────────────────── */
-async function message(request, env) {
+async function message(request, env, ctx) {
   const { allowed, cors } = corsFor(request);
   if (request.method === "OPTIONS") return new Response(null, { headers: cors });
   if (request.method !== "POST" || !allowed) return reply({ error: "niet toegestaan" }, 403, cors);
@@ -227,7 +233,64 @@ async function message(request, env) {
   if (!naam || !contact || vraag.length < 3) return reply({ error: "onvolledig" }, 400, cors);
   if (!env.DB) return reply({ error: "geen databank" }, 500, cors);
   await env.DB.prepare("INSERT INTO berichten (naam, contact, vraag) VALUES (?, ?, ?)").bind(naam, contact, vraag).run();
+  /* the message is safe in the database; the mail about it follows on its own */
+  if (env.MELDING) ctx.waitUntil(notify(env, naam, contact, vraag));
   return new Response(null, { status: 204, headers: cors });
+}
+
+/* Every mail goes to Elias alone, from the meld.ahai.be subdomain. A mail
+   that fails is only logged: what it reports is kept in the database. */
+async function mailElias(env, subject, text, replyTo) {
+  try {
+    await env.MELDING.send({
+      from: { email: "website@meld.ahai.be", name: "AhAi website" },
+      to: "elias@ahai.be",
+      subject: subject.replace(/[\r\n\t]+/g, " "),
+      text,
+      ...(replyTo ? { replyTo } : {})
+    });
+  } catch (err) {
+    console.error("melding niet verstuurd", err && (err.code || err.message));
+  }
+}
+
+/* A short mail to Elias: who wrote, how to reach them, and what they asked.
+   When they left an e-mail address, answering the mail answers them. */
+async function notify(env, naam, contact, vraag) {
+  const mail = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(contact) ? contact : null;
+  const who = naam.replace(/[\r\n\t]+/g, " ").slice(0, 60);
+  const text = `${naam} liet een bericht achter op ahai.be.\n\n` +
+    `Bereikbaar via: ${contact}\n\n${vraag}\n\n` +
+    `Alle berichten: https://ahai.be/overzicht\n`;
+  await mailElias(env, `Nieuw bericht van ${who}`, text, mail ? { email: mail, name: who } : null);
+}
+
+/* The site's own examples (the chips and the text in the empty field) say
+   nothing about what visitors need, so they are kept but not mailed. */
+const EXAMPLES = [
+  "Elke week zet ik bestellingen uit mails in Excel.",
+  "Elke week zet ik bestellingen uit mails in een Excel-lijst.",
+  "Ik maak elke maand het rooster voor ons team, met ieders wensen en verlof.",
+  "Ik heb een idee voor een app waarmee klanten zelf een afspraak maken, maar weet niet of het haalbaar is.",
+  "Ik wil een website voor mijn zaak, maar weet niet waar te beginnen."
+].map(plain);
+function plain(t) { return String(t || "").toLowerCase().replace(/\s+/g, " ").replace(/[.!?\s]+$/, "").trim(); }
+function isExample(tekst) { return EXAMPLES.includes(plain(tekst)); }
+
+/* What a visitor asked the tool, and everything it answered them. */
+async function tellUse(env, tekst, result, bron) {
+  const ok = result.status === "ok", score = ok ? scoreOf(result.factors) : null;
+  const lines = [`Iemand gebruikte "Waar klikt het?" op ahai.be.`, "", "Taak:", tekst, ""];
+  if (ok) {
+    lines.push(`Uitslag: ${score}%. ${verdictOf(score)}`, `Past het best bij: ${SERVICE[result.service] || result.service}`, "");
+    for (const f of result.factors) lines.push(`${f.name}: ${f.rating} van 3. ${f.reason}`);
+    lines.push("", "Wat ik voor je kan doen:", ...(result.acties || []).map((a) => `- ${a}`));
+  } else {
+    lines.push("Uitslag: te vaag.", `Teruggevraagd: ${result.vraag || "de standaardvraag"}`);
+  }
+  lines.push("", `Bron: ${bron || "onbekend"}`, "Alle antwoorden: https://ahai.be/overzicht");
+  const short = tekst.replace(/\s+/g, " ").slice(0, 60) + (tekst.length > 60 ? "…" : "");
+  await mailElias(env, `Waar klikt het? ${ok ? score + "%" : "vaag"}: ${short}`, lines.join("\n") + "\n", null);
 }
 
 /* ── Elias's overview ─────────────────────────────────────────── */

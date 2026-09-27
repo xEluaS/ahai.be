@@ -310,7 +310,9 @@ async function overview(request, env, url) {
     return Response.redirect(`${url.origin}/overzicht`, 303);
   }
 
-  const { results } = await env.DB.prepare("SELECT id, tijd, tekst, status, score, dienst, factoren, vraag, bron, acties FROM antwoorden ORDER BY id DESC LIMIT 1000").all();
+  const all = (await env.DB.prepare("SELECT id, tijd, tekst, status, score, dienst, factoren, vraag, bron, acties FROM antwoorden ORDER BY id DESC LIMIT 1000").all()).results;
+  // the site's own examples say nothing about visitors: counted, not shown
+  const results = all.filter((r) => !isExample(r.tekst)), examples = all.length - results.length;
   if (url.pathname === "/overzicht.csv") {
     const rows = [["tijd", "tekst", "score", "oordeel of vraag", "dienst", "factoren", "redenen", "wat ik kan doen", "bron"]].concat(results.map((r) => [
       r.tijd, r.tekst, r.score == null ? "vaag" : r.score, r.score == null ? (r.vraag || "") : verdictOf(r.score), SERVICE[r.dienst] || "",
@@ -321,7 +323,7 @@ async function overview(request, env, url) {
     return new Response(csv, { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="klikt-het.csv"', "Cache-Control": "no-store" } });
   }
   const messages = (await env.DB.prepare("SELECT id, tijd, naam, contact, vraag FROM berichten ORDER BY id DESC LIMIT 500").all()).results;
-  return new Response(page(results, messages), { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
+  return new Response(page(results, messages, examples), { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
 }
 
 function authorised(request, password) {
@@ -341,7 +343,7 @@ function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => (
 const WEIGHT = { 1: "weegt licht", 2: "weegt gewoon", 3: "weegt zwaar" };
 const SERVICE = { uitleggen: "Ik leg het uit", kijken: "Ik kom kijken", bouwen: "Ik bouw het" };
 
-function page(rows, messages) {
+function page(rows, messages, examples = 0) {
   const when = new Intl.DateTimeFormat("nl-BE", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Brussels" });
   const scored = rows.filter((r) => r.score != null);
   const mean = scored.length ? Math.round(scored.reduce((s, r) => s + r.score, 0) / scored.length) : null;
@@ -386,7 +388,7 @@ ${messages.map((m) => `<article>
       <form method="post" action="/overzicht/verwijder" onsubmit="return confirm('Dit bericht wissen?')"><input type="hidden" name="id" value="${m.id}"><input type="hidden" name="soort" value="bericht"><button>Wissen</button></form>
     </article>`).join("") || '<p class="empty">Nog geen berichten.</p>'}
 <h1 style="margin-top:64px">Klikt het?</h1>
-<p class="meta"><span>${rows.length} ${rows.length === 1 ? "antwoord" : "antwoorden"}</span>${mean == null ? "" : `<span>gemiddeld ${mean}%</span>`}<span>ouder dan twaalf maanden wordt gewist</span><a href="/overzicht.csv">Download als CSV</a></p>
+<p class="meta"><span>${rows.length} ${rows.length === 1 ? "antwoord" : "antwoorden"}</span>${mean == null ? "" : `<span>gemiddeld ${mean}%</span>`}${examples ? `<span>${examples} keer een voorbeeld geprobeerd, niet getoond</span>` : ""}<span>ouder dan twaalf maanden wordt gewist</span><a href="/overzicht.csv">Download als CSV</a></p>
 ${items || '<p class="empty">Nog geen antwoorden.</p>'}
 </main></body></html>`;
 }

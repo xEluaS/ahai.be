@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AhAi · Elias Cappon, AI uitgelegd, toegepast en gebouwd</title>
-<meta name="description" content="Elias Cappon, onderzoeker en docent in AI uit Kortrijk. Ik leg uit wat AI kan, kom kijken waar het jullie tijd wint en bouw wat jullie nodig hebben.">
+<meta name="description" content="Elias Cappon, onderzoeker en docent in AI uit Kortrijk. Ik help mensen en organisaties ontdekken wat AI voor hun werk kan betekenen. AhA! zo dus.">
 <meta name="theme-color" content="#FFFFFF">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/lexend-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -14,6 +14,8 @@
 <script src="scripts/canopy.js" defer></script>
 <script src="scripts/klikt.js" defer></script>
 <script src="scripts/contact.js" defer></script>
+<script src="scripts/vragen.js" defer></script>
+<script src="scripts/lanes.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#inhoud">Naar de inhoud</a>
@@ -24,14 +26,14 @@
     <nav class="rail rail--across label" aria-label="Hoofdmenu">
       <ol>
         <li><a href="#doen">Wat ik doe</a></li>
-        <li><a href="#voorbeelden">Voorbeelden</a></li>
+        <li><a href="#praktijk">Praktijk</a></li>
         <li><a href="#vragen">Vragen</a></li>
-        <li><a href="#wie">Wie</a></li>
+        <li><a href="#wie">Elias</a></li>
         <li><a href="#contact">Contact</a></li>
       </ol>
     </nav>
-    <a class="masthead__cta label" href="mailto:elias@ahai.be?subject=Kennismaking">
-      Schrijf me een mail
+    <a class="masthead__cta label" href="#contact">
+      Contact
       <svg viewBox="0 0 18 12" fill="none" aria-hidden="true"><path d="M1 6h15M11.5 1.5 16 6l-4.5 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="square"/></svg>
     </a>
     <button class="menu-toggle label" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
@@ -39,9 +41,9 @@
   <nav class="menu-panel" id="menu" aria-label="Menu">
     <ul>
       <li><a href="#doen">Wat ik doe</a></li>
-      <li><a href="#voorbeelden">Voorbeelden</a></li>
+      <li><a href="#praktijk">Praktijk</a></li>
       <li><a href="#vragen">Vragen</a></li>
-      <li><a href="#wie">Wie</a></li>
+      <li><a href="#wie">Elias</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
   </nav>
@@ -60,19 +62,19 @@
       <nav class="rail label" aria-label="Hoofdmenu">
         <ol>
           <li><a href="#doen">Wat ik doe</a></li>
-          <li><a href="#voorbeelden">Voorbeelden</a></li>
+          <li><a href="#praktijk">Praktijk</a></li>
           <li><a href="#vragen">Vragen</a></li>
-          <li><a href="#wie">Wie</a></li>
+          <li><a href="#wie">Elias</a></li>
           <li><a href="#contact">Contact</a></li>
         </ol>
       </nav>
       <h1 id="hero-title" class="display"><span>Het moment</span> <span>dat AI</span> <span>klikt.</span></h1>
       <form class="klikt" id="klikt" data-endpoint="/api/klikt" novalidate>
-        <label class="klikt__label label" for="klikt-taak">Beschrijf een taak uit je werk</label>
+        <label class="klikt__label label" for="klikt-taak">Beschrijf een taak, proces, idee of uitdaging uit je werk</label>
         <div class="klikt__field">
           <textarea id="klikt-taak" name="taak" rows="1" maxlength="600" autocomplete="off" placeholder="Elke week zet ik bestellingen uit mails in Excel." aria-describedby="klikt-hint klikt-fout"></textarea>
           <button class="klikt__go" type="submit">
-            Klikt het?
+            Waar klikt het?
             <svg viewBox="0 0 18 12" fill="none" aria-hidden="true"><path d="M1 6h15M11.5 1.5 16 6l-4.5 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="square"/></svg>
           </button>
         </div>
@@ -80,25 +82,21 @@
           <span class="klikt__try">Probeer:</span>
           <button type="button" class="chip" data-voorbeeld="Elke week zet ik bestellingen uit mails in een Excel-lijst.">Bestellingen uit mails</button>
           <button type="button" class="chip" data-voorbeeld="Ik maak elke maand het rooster voor ons team, met ieders wensen en verlof.">Het maandrooster</button>
+          <button type="button" class="chip" data-voorbeeld="Ik heb een idee voor een app waarmee klanten zelf een afspraak maken, maar weet niet of het haalbaar is.">Een idee</button>
           <button type="button" class="chip" data-voorbeeld="Ik wil een website voor mijn zaak, maar weet niet waar te beginnen.">Een website</button>
         </div>
-        <p class="klikt__hint" id="klikt-hint">Geen namen of persoonsgegevens. <a href="privacy.html">Privacy</a></p>
+        <p class="klikt__hint" id="klikt-hint">Je ziet waar AI voor jou iets kan betekenen, en waar misschien net niet. Geen namen of persoonsgegevens. <a href="privacy.html">Privacy</a></p>
         <p class="klikt__fout" id="klikt-fout" hidden></p>
       </form>
       <div class="hero__side">
-        <p class="lede">Ik ben Elias, onderzoeker en docent in AI. Ik leg uit wat AI kan, kom kijken waar het jullie tijd wint en bouw wat jullie nodig hebben.</p>
-        <div class="actions">
-          <a class="btn btn--primary" href="mailto:elias@ahai.be?subject=Kennismaking">
-            Schrijf me een mail
-            <svg viewBox="0 0 18 12" fill="none" aria-hidden="true"><path d="M1 6h15M11.5 1.5 16 6l-4.5 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="square"/></svg>
-          </a>
-        </div>
+        <p class="lede">Ik ben <a class="lede__name" href="#wie">Elias</a>, onderzoeker en docent in AI. Ik help mensen en organisaties ontdekken wat AI voor hun werk kan betekenen, tot op dat ene moment: <span class="aha-line">AhA! zo dus.</span></p>
       </div>
     </div>
     <div class="match" id="klikt-uitslag" hidden>
       <div class="match__silk"><svg aria-hidden="true" focusable="false"></svg></div>
       <div class="wrap match__in" aria-busy="false">
         <div class="match__head">
+          <p class="match__mark" aria-hidden="true" hidden><span class="mark" data-mark><span>AhA</span><svg class="mark__i" viewBox="0 0 259 766" focusable="false"><rect class="mark__stem" x="93" y="228" width="75" height="522"/><circle class="mark__dot" cx="130.5" cy="60.5" r="56"/></svg></span></p>
           <p class="match__score display" tabindex="-1" data-score>Even kijken…</p>
           <p class="match__verdict" data-verdict></p>
           <p class="match__caption label" id="klikt-kader">Zo komt de score tot stand</p>
@@ -109,7 +107,7 @@
           <ul class="match__reasons" data-reasons aria-labelledby="klikt-acties"></ul>
           <p class="match__fit" data-fit></p>
           <div class="actions">
-            <a class="btn btn--primary" data-mail href="mailto:elias@ahai.be?subject=Klikt%20het%3F">
+            <a class="btn btn--primary" data-mail href="#bericht">
               Stuur dit naar Elias
               <svg viewBox="0 0 18 12" fill="none" aria-hidden="true"><path d="M1 6h15M11.5 1.5 16 6l-4.5 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="square"/></svg>
             </a>
@@ -120,84 +118,113 @@
     </div>
   </section>
 
-  <section class="section section--first" id="doen" aria-labelledby="doen-title">
+  <section class="section section--first aha" id="aha" aria-labelledby="aha-title">
+    <div class="wrap">
+      <div class="rule" aria-hidden="true"></div>
+      <div class="aha__story">
+        <p class="aha__lead">AI is overal.</p>
+        <p class="aha__turn">Maar pas als je ziet wat het voor jouw werk betekent, gebeurt er iets.</p>
+        <h2 id="aha-title" class="display aha__pay"><span class="sr-only">AhA! zo dus.</span><span aria-hidden="true"><span class="mark" data-mark data-mark-reveal><span>AhA</span><svg class="mark__i" viewBox="0 0 242 766" focusable="false"><rect class="mark__stem" x="96" y="230" width="50" height="520"/><circle class="mark__dot" cx="121" cy="76" r="45.5"/></svg></span> zo dus.</span></h2>
+      </div>
+      <div class="aha__not">
+        <h3 class="label">Geen AI om de AI</h3>
+        <div>
+          <p>De vraag is niet: wat kunnen we met AI doen? De vraag is: wat zou jouw werk beter maken?</p>
+          <p>Soms is dat AI. Soms is een eenvoudigere oplossing beter. En soms verandert er beter niets. Eerst begrijpen, dan pas technologie.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="doen" aria-labelledby="doen-title">
     <div class="wrap">
       <div class="rule" aria-hidden="true"></div>
       <div class="section__head">
         <h2 id="doen-title" class="display">Wat ik doe</h2>
-        <p class="section__intro">Drie manieren om te beginnen. Vaak start het met een workshop of een bezoek, en groeit het van daaruit.</p>
+        <p class="section__intro">Waar sta je? Open wat bij je past. Begrijpen, ontdekken en toepassen volgen vaak op elkaar, maar je hoeft ze niet alle drie te doen.</p>
       </div>
     </div>
-    <div class="lanes">
+    <div class="lanes" data-lanes>
       <article class="lane" data-dye="madder" id="uitleggen">
         <div class="lane__silk">
           <svg aria-hidden="true" focusable="false"></svg>
-          <div class="wrap lane__band">
-            <div class="lane__names"><p class="lane__word label">Expertise</p><h3>Ik leg het uit</h3></div>
-            <p class="lane__spec label"><span>1&nbsp;uur tot een halve&nbsp;dag</span><span>bij&nbsp;jullie of via&nbsp;Teams</span></p>
-          </div>
+          <h3 class="lane__head"><button type="button" class="wrap lane__band" aria-expanded="true" aria-controls="uitleggen-meer">
+            <span class="lane__names"><span class="lane__word label">Wil je het snappen?</span><span class="lane__name">Ik leg het uit</span><span class="lane__sign" aria-hidden="true"></span></span>
+            <span class="lane__spec label"><span>Een team dat weet wat kan,</span> <span>en wat niet mag</span></span>
+          </button></h3>
         </div>
-        <div class="wrap lane__body">
-          <p>Een talk of workshop voor je team: wat AI vandaag kan, met voorbeelden uit jullie eigen werk. Iedereen mag alles vragen, ook de vragen die dom lijken, want net die helpen het meest.</p>
-          <dl class="lane__for"><dt class="label">Voor wie</dt><dd>Teams die willen weten wat AI voor hen kan doen.</dd></dl>
+        <div class="lane__more" id="uitleggen-meer">
+          <div class="wrap lane__body">
+            <div class="lane__text">
+              <p>Een talk, workshop of opleiding over wat AI vandaag kan, met voorbeelden uit je eigen werk. Alles mag gevraagd worden, ook de vragen die dom lijken, want net die helpen het meest.</p>
+              <p class="lane__meta">1 uur tot een halve dag, ter plaatse of via Teams</p>
+            </div>
+            <dl class="lane__for"><dt class="label">Begrijpen</dt><dd>Workshops, opleidingen, lezingen en begeleiding.</dd></dl>
+          </div>
         </div>
       </article>
       <article class="lane" data-dye="indigo" id="kijken">
         <div class="lane__silk">
           <svg aria-hidden="true" focusable="false"></svg>
-          <div class="wrap lane__band">
-            <div class="lane__names"><p class="lane__word label">Jouw werk</p><h3>Ik kom kijken</h3></div>
-            <p class="lane__spec label"><span>Een&nbsp;dag</span><span>bij&nbsp;jullie op&nbsp;kantoor</span></p>
-          </div>
+          <h3 class="lane__head"><button type="button" class="wrap lane__band" aria-expanded="true" aria-controls="kijken-meer">
+            <span class="lane__names"><span class="lane__word label">Wil je weten waar het helpt?</span><span class="lane__name">Ik kom kijken</span><span class="lane__sign" aria-hidden="true"></span></span>
+            <span class="lane__spec label"><span>Een lijstje: waar AI helpt,</span> <span>en waar niet</span></span>
+          </button></h3>
         </div>
-        <div class="wrap lane__body">
-          <p>Ik loop mee en kijk waar tijd verloren gaat: Excel-lijsten die elke week met de hand worden ingevuld, verslagen die telkens opnieuw worden getypt, mails die altijd hetzelfde antwoord krijgen. Je krijgt een concreet lijstje: waar AI tijd wint, en waar niet.</p>
-          <dl class="lane__for"><dt class="label">Voor wie</dt><dd>Organisaties die voelen dat het slimmer kan, maar niet weten waar te beginnen.</dd></dl>
+        <div class="lane__more" id="kijken-meer">
+          <div class="wrap lane__body">
+            <div class="lane__text">
+              <p>Ik kijk mee en zoek waar tijd verloren gaat: lijsten die elke week met de hand worden ingevuld, verslagen die telkens opnieuw worden getypt, mails die altijd hetzelfde antwoord krijgen.</p>
+              <p class="lane__meta">Een dag, bij jou op het werk</p>
+            </div>
+            <dl class="lane__for"><dt class="label">Ontdekken</dt><dd>Vertrekken vanuit je werk, niet vanuit de tools.</dd></dl>
+          </div>
         </div>
       </article>
       <article class="lane" data-dye="saffron" id="bouwen">
         <div class="lane__silk">
           <svg aria-hidden="true" focusable="false"></svg>
-          <div class="wrap lane__band">
-            <div class="lane__names"><p class="lane__word label">AI</p><h3>Ik bouw het</h3></div>
-            <p class="lane__spec label"><span>Website, app</span><span>of&nbsp;tool</span></p>
-          </div>
+          <h3 class="lane__head"><button type="button" class="wrap lane__band" aria-expanded="true" aria-controls="bouwen-meer">
+            <span class="lane__names"><span class="lane__word label">Weet je wat je wil?</span><span class="lane__name">Ik bouw het</span><span class="lane__sign" aria-hidden="true"></span></span>
+            <span class="lane__spec label"><span>Een eerste versie</span> <span>die je kan aanklikken</span></span>
+          </button></h3>
         </div>
-        <div class="wrap lane__body">
-          <p>Met AI en mijn technische achtergrond bouw ik wat jullie nodig hebben: een website, een app, een tool die een vervelende taak overneemt. Snel een eerste versie, zodat je voelt of het werkt.</p>
-          <dl class="lane__for"><dt class="label">Voor wie</dt><dd>Vaak de volgende stap na een workshop of een bezoek.</dd></dl>
+        <div class="lane__more" id="bouwen-meer">
+          <div class="wrap lane__body">
+            <div class="lane__text">
+              <p>Met AI en mijn technische achtergrond bouw ik wat je nodig hebt: een tool die een vervelende taak overneemt, een automatisatie, een website of app. Snel een eerste versie, zodat je voelt of het werkt.</p>
+              <p class="lane__meta">Van prototype tot maatwerk</p>
+            </div>
+            <dl class="lane__for"><dt class="label">Toepassen</dt><dd>Prototypes, AI-tools, automatisaties en maatwerk.</dd></dl>
+          </div>
         </div>
       </article>
     </div>
   </section>
 
-  <section class="section" id="voorbeelden" aria-labelledby="voorbeelden-title">
+  <section class="section" id="praktijk" aria-labelledby="praktijk-title">
     <div class="wrap">
       <div class="rule" aria-hidden="true"></div>
       <div class="section__head">
-        <h2 id="voorbeelden-title" class="display">Herken je dit?</h2>
-        <p class="section__intro">Kies een taak en kijk wat AI ermee doet. Het zijn voorbeelden: bij jullie vertrekken we van jullie eigen werk.</p>
+        <h2 id="praktijk-title" class="display">Uit de praktijk</h2>
+        <p class="section__intro">Waar AI iemands werk kruiste, en wat dat opleverde. Geen verzonnen cijfers: alleen wat er echt gebeurde.</p>
       </div>
-      <fieldset class="jobs">
-        <legend class="sr-only">Kies een taak</legend>
-        <label><input type="radio" name="task" value="excel" checked><span>Excel-lijsten</span></label>
-        <label><input type="radio" name="task" value="mails"><span>Mails</span></label>
-        <label><input type="radio" name="task" value="verslagen"><span>Verslagen</span></label>
-        <label><input type="radio" name="task" value="planning"><span>Planning</span></label>
-        <label><input type="radio" name="task" value="zoeken"><span>Informatie zoeken</span></label>
-      </fieldset>
+      <div class="case__head">
+        <h3>Workshop "AI in je onderwijspraktijk"</h3>
+        <p>Voor docenten van VIVES, mei 2026</p>
+      </div>
     </div>
 
     <div class="crossing" data-crossing>
       <svg class="crossing__silk" aria-hidden="true" focusable="false"></svg>
-      <p class="crossing__work tag label" aria-hidden="true"><span>Jouw werk</span><b data-job-label>Excel-lijsten</b></p>
+      <p class="crossing__work tag label" aria-hidden="true"><span>Hun werk</span><b>Lesvoorbereiding</b></p>
       <div class="wrap crossing__grid">
-        <p class="crossing__note">Werk je met gevoelige gegevens, van klanten, patiënten of leerlingen? Dan leer je ook wat je beter niet in een AI-tool stopt.</p>
-        <ul class="crossing__list" data-examples aria-live="polite">
-          <li><svg class="x-strip" aria-hidden="true" focusable="false"></svg><p>Gegevens uit mails of pdf's overnemen, in plaats van ze over te typen.</p></li>
-          <li><svg class="x-strip" aria-hidden="true" focusable="false"></svg><p>Een rommelige export opkuisen tot een tabel waar je mee kan werken.</p></li>
-          <li><svg class="x-strip" aria-hidden="true" focusable="false"></svg><p>Uit honderd rijen halen wat opvalt, zonder zelf formules te bouwen.</p></li>
-        </ul>
+        <p class="crossing__note">Meer cases volgen: roosters voor verpleegkundigen, mee opgebouwd met AI, en binnenkort een introductie voor ziekenhuisartsen.</p>
+        <ol class="crossing__list case__steps" data-examples>
+          <li><svg class="x-strip" aria-hidden="true" focusable="false"></svg><p class="label">De vraag</p><p>Docenten wilden weten hoe AI hun lesvoorbereiding kan versnellen, zonder hun eigen materiaal los te laten.</p></li>
+          <li><svg class="x-strip" aria-hidden="true" focusable="false"></svg><p class="label">Wat we deden</p><p>We werkten met NotebookLM op hun eigen lessen: samenvattingen, flashcards, quizzen en presentaties.</p></li>
+          <li><svg class="x-strip" aria-hidden="true" focusable="false"></svg><p class="label">Wat ze zeiden</p><blockquote class="case__said"><p>Heel interessant en meteen toepasbaar.</p><p>Rustig en gestructureerd en duidelijk.</p><footer>Deelnemers aan de workshop</footer></blockquote></li>
+        </ol>
       </div>
     </div>
   </section>
@@ -207,16 +234,35 @@
       <div class="rule" aria-hidden="true"></div>
       <div class="section__head">
         <h2 id="vragen-title" class="display">Vragen als deze</h2>
-        <p class="section__intro">Voorbeelden, geen citaten. In een sessie beantwoord ik de vragen van jullie eigen team.</p>
+        <p class="section__intro">Zo klinken de vragen die ik krijg: voorbeelden, geen citaten. Tik er een aan voor mijn antwoord.</p>
       </div>
-      <ul class="questions">
-        <li><p>Mag ik klantgegevens in ChatGPT steken?</p><span class="label">Dossierbeheerder</span></li>
-        <li><p>Mijn collega's gebruiken het al. Ik weet niet eens waarvoor.</p><span class="label">Teamleider</span></li>
-        <li><p>Kan AI die Excel elke week voor mij invullen?</p><span class="label">Administratief medewerker</span></li>
-        <li><p>Ik heb het één keer geprobeerd. Het gaf onzin terug.</p><span class="label">Projectleider</span></li>
-        <li><p>Blijft onze data hier, of gaat die ergens naartoe?</p><span class="label">IT-verantwoordelijke</span></li>
-        <li><p>Is dit iets dat binnen twee jaar weer overwaait?</p><span class="label">Zaakvoerder</span></li>
-      </ul>
+      <div class="cloud" data-cloud>
+        <ul class="cloud__all" aria-label="Alle vragen">
+          <li><button type="button" class="cloud__q" data-wie="Dossierbeheerder" data-antwoord="Niet zomaar. Het hangt af van welke versie je gebruikt en wat jullie afspraken zeggen. Ik toon je wat wel kan, en hoe je gegevens eerst onherkenbaar maakt.">Mag ik klantgegevens in ChatGPT steken?</button></li>
+          <li><button type="button" class="cloud__q" data-wie="Teamleider" data-antwoord="Vraag het hen gewoon. Vaak zijn het kleine dingen: een mail herschrijven, iets samenvatten. Daar kan je samen op verder bouwen.">Mijn collega's gebruiken het al. Ik weet niet eens waarvoor.</button></li>
+          <li><button type="button" class="cloud__q" data-wie="Administratief medewerker" data-antwoord="Soms wel, soms net niet. Het hangt af van waar de gegevens vandaan komen. Beschrijf het me, dan zeg ik eerlijk wat kan.">Kan AI die Excel elke week voor mij invullen?</button></li>
+          <li><button type="button" class="cloud__q" data-wie="Projectleider" data-antwoord="Dat overkomt iedereen. Vaak ligt het aan wat je vraagt en wat je meegeeft. Met een paar gewoontes wordt het antwoord veel beter.">Ik heb het één keer geprobeerd. Het gaf onzin terug.</button></li>
+          <li><button type="button" class="cloud__q" data-wie="IT-verantwoordelijke" data-antwoord="Dat hangt af van de tool en het abonnement. Sommige bewaren niets, andere leren bij van wat je ingeeft. Ik help je kiezen.">Blijft onze data hier, of gaat die ergens naartoe?</button></li>
+          <li><button type="button" class="cloud__q" data-wie="Zaakvoerder" data-antwoord="De namen van de tools veranderen. Dat computers taal begrijpen, gaat niet meer weg. Wat je nu leert, blijft bruikbaar.">Is dit iets dat binnen twee jaar weer overwaait?</button></li>
+          <li><button type="button" class="cloud__q" data-wie="" data-antwoord="Ja. Veel gesprekken beginnen met nieuwsgierigheid. We zoeken samen uit of er iets is.">Ik heb nog geen concreet idee. Mag ik je toch contacteren?</button></li>
+          <li><button type="button" class="cloud__q" data-wie="" data-antwoord="Nee. Soms is een betere lijst genoeg, soms verandert er beter niets. Dat zeg ik je dan ook.">Is AI altijd de oplossing?</button></li>
+          <li><button type="button" class="cloud__q" data-wie="" data-antwoord="Nee. Ik begin bij wat je vandaag doet, niet bij de techniek.">Moet ik al iets van AI kennen?</button></li>
+          <li><button type="button" class="cloud__q" data-wie="" data-antwoord="Ja. Een talk of workshop, ter plaatse of via Teams, met voorbeelden uit je eigen werk.">Geef je ook workshops?</button></li>
+          <li><button type="button" class="cloud__q" data-wie="" data-antwoord="Ja. Een tool, een automatisatie, een website of app. Eerst een snelle eerste versie, zodat je voelt of het werkt.">Kun je iets op maat bouwen?</button></li>
+          <li><button type="button" class="cloud__q" data-wie="" data-antwoord="Nee. Ook met een eigen vraag of een idee kan je bij me terecht.">Moet ik een bedrijf hebben?</button></li>
+          <li><button type="button" class="cloud__q" data-wie="" data-antwoord="Beschrijf bovenaan een taak uit je werk, of stuur me een bericht. Dan kijken we samen.">Hoe begin ik?</button></li>
+        </ul>
+        <div class="cloud__stage" data-stage aria-label="Vragen die verschijnen en verdwijnen" hidden></div>
+        <div class="cloud__answer" aria-live="polite">
+          <p class="cloud__hint" data-hint>Tik een vraag aan voor mijn antwoord.</p>
+          <div class="cloud__reply" data-reply hidden>
+            <p class="cloud__asked label" data-asked></p>
+            <p class="cloud__text" data-text></p>
+            <button type="button" class="cloud__close" data-close>Sluit</button>
+          </div>
+          <button type="button" class="cloud__mode" data-mode hidden>Toon alle vragen</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -231,28 +277,13 @@
         </figure>
         <div class="who__text">
           <h2 id="wie-title" class="display">Elias Cappon</h2>
-          <p>Ik ben onderzoeker in AI en robotica aan UGent Campus Kortrijk en docent AI aan VIVES. Ik bouw AI-modellen en geef er les over. Diezelfde kennis breng ik naar jouw team: in gewone taal, met jullie eigen werk als voorbeeld.</p>
+          <p class="who__claim">Ik onderzoek AI. Ik geef er les over. En ik bouw ermee.</p>
+          <p>Onderzoeker in AI, automatisering en robotica aan UGent Campus Kortrijk, docent AI en IT aan VIVES. Die kennis maak ik begrijpelijk: in gewone taal, met je eigen werk als voorbeeld.</p>
           <dl class="creds">
-            <div><dt class="label">KU Leuven</dt><dd>Master Artificiële Intelligentie, 2025</dd></div>
-            <div><dt class="label">UGent Campus Kortrijk</dt><dd>Onderzoeker AI en robotica, sinds 2021</dd></div>
+            <div><dt class="label">UGent Campus Kortrijk</dt><dd>Onderzoeker AI, automatisering en robotica</dd></div>
             <div><dt class="label">VIVES</dt><dd>Docent AI en IT</dd></div>
+            <div><dt class="label">KU Leuven</dt><dd>Master Artificiële Intelligentie</dd></div>
           </dl>
-          <div class="practice">
-            <h3 class="label">Uit de praktijk</h3>
-            <article class="case">
-              <h4>Workshop "AI in je onderwijspraktijk", VIVES</h4>
-              <p>Docenten wilden weten hoe AI hun lesvoorbereiding kan versnellen zonder hun eigen materiaal los te laten. We werkten met NotebookLM op hun eigen lessen: samenvattingen, flashcards, quizzen en presentaties.</p>
-              <blockquote class="case__quote">
-                <p>Heel interessant en meteen toepasbaar.</p>
-                <p>Rustig en gestructureerd en duidelijk.</p>
-                <footer>Deelnemers aan de workshop, mei 2026</footer>
-              </blockquote>
-            </article>
-            <ul>
-              <li>Roosters voor verpleegkundigen, mee opgebouwd met AI.</li>
-              <li>Binnenkort: een introductie voor ziekenhuisartsen.</li>
-            </ul>
-          </div>
         </div>
       </div>
     </div>
@@ -266,8 +297,8 @@
     <div class="wrap">
       <div class="contact__grid">
         <div>
-          <h2 id="contact-title" class="display">Vertel me waar jullie vastzitten.</h2>
-          <p class="contact__text">Geen offerteformulier en geen verkoopsgesprek. Schrijf in een paar zinnen wat jullie doen en wat je je afvraagt. Dan zeg ik eerlijk of ik de juiste persoon ben.</p>
+          <h2 id="contact-title" class="display">Vertel me wat je doet.</h2>
+          <p class="contact__text">Geen offerteformulier en geen verkoopsgesprek. Je hoeft nog niet te weten wat je nodig hebt: een vraag, een idee of gewoon nieuwsgierigheid is genoeg. Dan zeg ik eerlijk of ik je kan helpen.</p>
           <div class="actions contact__actions">
             <a class="btn btn--primary" href="mailto:elias@ahai.be?subject=Kennismaking">
               Schrijf me een mail
@@ -281,14 +312,14 @@
             <input id="bericht-naam" name="naam" autocomplete="name" maxlength="120" required>
             <label for="bericht-contact">E-mail of telefoon</label>
             <input id="bericht-contact" name="contact" autocomplete="email" maxlength="160" required>
-            <label for="bericht-vraag">Waar zit je team mee?</label>
+            <label for="bericht-vraag">Wat doe je, of waar ben je nieuwsgierig naar?</label>
             <textarea id="bericht-vraag" name="vraag" rows="4" maxlength="2000" required></textarea>
             <p class="bericht__val" aria-hidden="true"><label>Laat dit leeg <input name="website" tabindex="-1" autocomplete="off"></label></p>
             <button class="btn btn--ghost" type="submit">Verstuur</button>
             <p class="bericht__status" role="status" hidden><span class="mark" data-mark aria-hidden="true" hidden><span>AhA</span><svg class="mark__i" viewBox="0 0 259 766" focusable="false"><rect class="mark__stem" x="93" y="228" width="75" height="522"/><circle class="mark__dot" cx="130.5" cy="60.5" r="56"/></svg></span><span data-status-text></span></p>
           </form>
         </div>
-        <p class="closing" aria-hidden="true"><span class="mark" data-mark><span>AhA</span><svg class="mark__i" viewBox="0 0 242 766" focusable="false"><rect class="mark__stem" x="96" y="230" width="50" height="520"/><circle class="mark__dot" cx="121" cy="76" r="45.5"/></svg></span></p>
+        <p class="closing" aria-hidden="true"><span class="mark" data-mark data-mark-reveal><span>AhA</span><svg class="mark__i" viewBox="0 0 242 766" focusable="false"><rect class="mark__stem" x="96" y="230" width="50" height="520"/><circle class="mark__dot" cx="121" cy="76" r="45.5"/></svg></span></p>
       </div>
     </div>
   </section>

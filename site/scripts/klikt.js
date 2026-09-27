@@ -1,4 +1,4 @@
-/* AhAi: Klikt het?
+/* AhAi: Waar klikt het?
    A visitor describes a task from their work. The analysis service (a
    data-endpoint on the form) has Gemini choose the factors that matter for
    that task, rate and weigh them and write the reasons; the match is then
@@ -21,7 +21,8 @@
     reasons: panel.querySelector("[data-reasons]"),
     fit: panel.querySelector("[data-fit]"),
     mail: panel.querySelector("[data-mail]"),
-    again: panel.querySelector("[data-again]")
+    again: panel.querySelector("[data-again]"),
+    mark: panel.querySelector(".match__mark")
   };
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
   var busy = false, keep = false;
@@ -35,7 +36,7 @@
   var WEIGHT = { 1: "telt licht", 2: "telt gewoon", 3: "telt zwaar" };
   var LEVEL = { 0: "niet gunstig", 1: "een beetje gunstig", 2: "duidelijk gunstig", 3: "sterk gunstig" };
   var HUMAN = "Mens aan het stuur";
-  var ASK = "Welke mails, lijsten of documenten komen erbij kijken, en hoe vaak doe je het?";
+  var ASK = "Wat doe je op een gewone werkdag? Een tuinman maakt bijvoorbeeld offertes, beantwoordt mails en plant de week in.";
 
   /* Generous but honest: the weighted average of the factors maps onto 45
      to 95. Nothing is a sure thing, so the match never reaches 100. The
@@ -113,6 +114,29 @@
     var docs = [], steps = [];
     STEPS.forEach(function (s) { if (s[0].test(t)) steps.push(s[1]); });
     (t.match(WORDS.docs) || []).forEach(function (w) { w = SHOWN[w] || w; if (docs.indexOf(w) < 0) docs.push(w); });
+    /* Asking straight for what Elias offers (a site, an app, a workshop) is
+       never vague and always fits, as the analysis service rates it too:
+       it saves the searching, and it is what AI does well today. */
+    var made = t.match(/\b(website|site|webshop|webwinkel|app|applicatie|tool|platform|portfolio|chatbot)\b/);
+    var taught = /\b(workshop|opleiding|lezing|training|cursus)\b/.test(t);
+    if ((made || taught) && words >= 4 && /\b(wil|wilde|graag|zoek|zoeken|nodig|idee|bouwen|bouw|maken|laten)\b/.test(t)) {
+      var thing = made ? (made[1] === "site" ? "website" : made[1] === "applicatie" ? "app" : made[1]) : "";
+      return made ? {
+        status: "ok", service: "bouwen",
+        factors: [
+          { name: "Tijd die je terugwint", rating: 2, weight: 1, reason: "Je hoeft niet zelf uit te zoeken hoe het moet: een eerste versie staat er snel." },
+          { name: "Hoe goed AI dit al kan", rating: 3, weight: 1, reason: "Een " + thing + " bouwen met AI kan vandaag goed." }
+        ],
+        acties: ["Ik bouw een eerste versie van je " + thing + ", zodat je snel ziet of het werkt.", "Daarna verfijnen we samen tot het doet wat je nodig hebt."]
+      } : {
+        status: "ok", service: "uitleggen",
+        factors: [
+          { name: "Tijd die je terugwint", rating: 2, weight: 1, reason: "Je leert in een paar uur wat je anders zelf moet uitzoeken." },
+          { name: "Hoe goed AI dit al kan", rating: 3, weight: 1, reason: "De AI-tools die hierbij helpen, bestaan vandaag al." }
+        ],
+        acties: ["Ik geef een workshop met voorbeelden uit je eigen werk.", "Ik toon je welke AI-tools vandaag al helpen, en wat je beter niet doet."]
+      };
+    }
     var cues = (freq ? 1 : 0) + docs.length + steps.length + (WORDS.digital.test(t) ? 1 : 0);
     if (words < 5 || cues === 0) return { status: "vaag", vraag: ASK };
 
@@ -132,13 +156,13 @@
         : "Het komt niet vaak terug, dus de tijdwinst blijft eerder beperkt." },
       { name: "Hoe goed AI dit al kan", rating: Math.round(easy / 3), weight: 1, reason: docs.length
         ? "Werken met " + docs.slice(0, 2).join(" en ") + " kan AI vandaag al goed."
-        : "Het hangt af van hoe jullie werken, dus eerst even kijken." }
+        : "Het hangt af van hoe je werkt, dus eerst even kijken." }
     ];
     var service = r.herhaling >= 2 && r.patroon >= 2 && r.digitaal >= 2 ? "bouwen" : r.tekst >= 2 && r.patroon <= 1 ? "uitleggen" : "kijken";
     var acties = {
       bouwen: ["Ik bouw een tool die het " + (step || "werk") + " voor je voorbereidt.", "Jij kijkt het resultaat na, de tool doet het herhaalwerk."],
-      uitleggen: ["Ik toon jullie welke AI-tools hier vandaag al helpen.", "Ik oefen met jullie op jullie eigen " + (docs[0] || "werk") + "."],
-      kijken: ["Ik kom kijken hoe jullie dit vandaag aanpakken.", "Ik zeg eerlijk waar AI hier tijd wint, en waar niet."]
+      uitleggen: ["Ik toon je welke AI-tools hier vandaag al helpen.", "Ik oefen met je op je eigen " + (docs[0] || "werk") + "."],
+      kijken: ["Ik kom kijken hoe je dit vandaag aanpakt.", "Ik zeg eerlijk waar AI hier tijd wint, en waar niet."]
     }[service];
     return { status: "ok", factors: factors, acties: acties, service: service };
   }
@@ -170,6 +194,12 @@
     [out.frame, out.reasons, out.fit].forEach(function (n) { n.textContent = ""; });
     out.verdict.textContent = "";
     out.frame.classList.remove("is-grown");
+    /* the mark waits as AhAi until the next match lands */
+    if (out.mark) {
+      out.mark.hidden = true;
+      var m = out.mark.querySelector("[data-mark]");
+      if (m && m.aha) m.aha(0);
+    }
     /* empty blocks would still take up the grid's gaps */
     [out.caption, out.acts, out.reasons, out.fit].forEach(function (n) { if (n) n.hidden = true; });
   }
@@ -222,7 +252,15 @@
     var pct = el("span", null, "%");
     pct.setAttribute("aria-hidden", "true");
     out.score.append(count, pct, el("span", "sr-only", score + " procent"));
-    meter(score, function (e) { count.textContent = String(Math.round(score * e)); });
+    if (out.mark) out.mark.hidden = false;
+    meter(score, function (e) {
+      count.textContent = String(Math.round(score * e));
+      /* once the strands have wound in, AhAi becomes AhA! */
+      if (e >= 1 && out.mark) {
+        var m = out.mark.querySelector("[data-mark]");
+        if (m && m.aha) m.aha(1);
+      }
+    });
 
     out.verdict.textContent = verdictOf(score);
     [out.caption, out.acts, out.reasons, out.fit].forEach(function (n) { if (n) n.hidden = false; });
@@ -259,9 +297,7 @@
     link.href = fit.href;
     out.fit.append("Past het best bij: ", link);
 
-    var body = "Hoi Elias,\n\nIk probeerde \"Klikt het?\" op je site met deze taak:\n\n" + text +
-      "\n\nHet klikte voor " + score + "%. Kunnen we eens bekijken wat AI hier kan doen?\n";
-    out.mail.href = "mailto:elias@ahai.be?subject=" + encodeURIComponent("Klikt het? " + score + "%") + "&body=" + encodeURIComponent(body);
+    told = { text: text, score: score };
     out.mail.hidden = false;
     enter();
   }
@@ -270,11 +306,32 @@
     clear();
     out.score.textContent = "Dat lukt nu even niet";
     out.verdict.textContent = "Schrijf me gerust rechtstreeks, dan bekijk ik je taak zelf.";
-    out.mail.href = "mailto:elias@ahai.be?subject=" + encodeURIComponent("Klikt het?");
+    told.score = null;
     out.mail.hidden = false;
     meter(null);
     enter();
   }
+
+  /* "Stuur dit naar Elias" puts the task and its match in the message
+     form below, where it can still be added to before it is sent. */
+  var told = { text: "", score: null };
+  out.mail.addEventListener("click", function (ev) {
+    var box = document.getElementById("bericht");
+    if (!box || !told.text) return;
+    ev.preventDefault();
+    var note = "Ik probeerde \u201cWaar klikt het?\u201d met deze taak:\n" + told.text + "\n\n" +
+      (told.score != null ? "Het klikte voor " + told.score + "%. Kunnen we eens bekijken wat AI hier kan doen?\n\n" : "");
+    var area = box.vraag;
+    /* whatever the visitor wrote there already stays */
+    area.value = !area.value || area.value === area.dataset.fromTool ? note : note + area.value;
+    area.dataset.fromTool = area.value;
+    area.style.height = "auto";
+    area.style.height = Math.max(area.offsetHeight, area.scrollHeight + 2) + "px";
+    box.scrollIntoView({ behavior: reduce.matches ? "auto" : "smooth", block: "center" });
+    var next = !box.naam.value ? box.naam : area;
+    next.focus({ preventScroll: true });
+    if (next === area) area.setSelectionRange(area.value.length, area.value.length);
+  });
 
   /* The info bubbles: they open on hover and focus; a tap toggles them,
      for phones, and Escape or a tap elsewhere closes them. */
@@ -339,6 +396,7 @@
       return;
     }
     busy = true;
+    told = { text: text, score: null };
     clear();
     out.score.textContent = "Even kijken…";
     out.mail.hidden = true;

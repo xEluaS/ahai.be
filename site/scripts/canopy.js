@@ -109,13 +109,17 @@
   /* A ribbon on any centre line u -> [x, y], sampled finely enough for a braid. */
   function geometryFn(r) {
     var N = r.samples || 140, pts = [], h = 0.5 / N;
+    /* like a band being pulled in, a strand may exist only up to a point */
+    var U = r.reveal == null ? 1 : r.reveal;
+    if (U <= 0.001) return { d: "", pts: [], angle: 0 };
     for (var i = 0; i <= N; i++) {
-      var u = i / N, p = r.fn(u), a = r.fn(Math.max(0, u - h)), b = r.fn(Math.min(1, u + h));
+      var u = (U * i) / N, p = r.fn(u), a = r.fn(Math.max(0, u - h)), b = r.fn(Math.min(1, u + h));
       var tx = b[0] - a[0], ty = b[1] - a[1], tl = Math.hypot(tx, ty) || 1;
       var pinch = 1 - r.pinch * Math.pow(Math.sin(Math.PI * (u * r.folds + r.phase)), 2);
       /* widthAt lets a strand swell as it turns towards the viewer */
       pts.push({ x: p[0], y: p[1], px: -ty / tl, py: tx / tl, hw: (r.w / 2) * pinch * (r.widthAt ? r.widthAt(u) : 1) });
     }
+    if (U < 1) taper(pts, r.w * 0.9);
     var s0 = r.fn(0), s1 = r.fn(1);
     return { d: offsetOutline(pts), pts: pts, angle: (Math.atan2(s1[1] - s0[1], s1[0] - s0[0]) * 180) / Math.PI };
   }
@@ -478,37 +482,13 @@
     return resize;
   }
 
-  /* ── Herken je dit: your work, crossed by AI ──────────────────── */
-  var TASKS = {
-    excel: { name: "Excel-lijsten", items: [
-      "Gegevens uit mails of pdf's overnemen, in plaats van ze over te typen.",
-      "Een rommelige export opkuisen tot een tabel waar je mee kan werken.",
-      "Uit honderd rijen halen wat opvalt, zonder zelf formules te bouwen."] },
-    mails: { name: "Mails", items: [
-      "Een lange mailwisseling samenvatten tot wat er van jou gevraagd wordt.",
-      "Een eerste antwoord klaarzetten op vragen die altijd terugkomen.",
-      "Een lastige mail herschrijven zodat hij vriendelijk en duidelijk is."] },
-    verslagen: { name: "Verslagen", items: [
-      "Notities van een vergadering omzetten in een verslag met taken.",
-      "Een rapport van twintig pagina's samenvatten op één pagina.",
-      "Een verslag herschrijven in gewone taal, voor wie niet van het vak is."] },
-    planning: { name: "Planning", items: [
-      "Een weekrooster opstellen dat met ieders wensen rekening houdt.",
-      "Zien waar een planning knelt, nog voor het misloopt.",
-      "Uit losse mails en lijstjes een overzicht maken van wie wat wanneer doet."] },
-    zoeken: { name: "Informatie zoeken", items: [
-      "Een antwoord vinden in jullie eigen handleidingen en procedures.",
-      "Een lange richtlijn doorzoeken en uitleggen wat erin staat.",
-      "De kern halen uit een document dat niemand graag leest."] }
-  };
-
+  /* ── Uit de praktijk: someone's work, crossed by AI at each step ── */
   function crossing() {
     var box = document.querySelector("[data-crossing]");
     if (!box) return null;
     var list = box.querySelector("[data-examples]");
     var items = Array.prototype.slice.call(list.children);
     var workTag = box.querySelector(".crossing__work");
-    var jobLabel = box.querySelector("[data-job-label]");
 
     /* wide screens: one indigo band, three AI bands running frame to frame */
     var wide = new Silk(box.querySelector(".crossing__silk"), { blur: 4 });
@@ -527,7 +507,6 @@
       s.chord(w, a);
       return { silk: s, work: w, ai: a, at: [0.3, 0.56, 0.8][i] };
     });
-    var pulse = items.map(function () { return 0; });
 
     function layout() {
       if (!stripQuery.matches) {
@@ -540,7 +519,7 @@
           ais[i].a = [x + 50, -40];
           ais[i].b = [x - 40, H + 40];
           ais[i].w = 42;
-          ais[i].sag = 0.02 + pulse[i];
+          ais[i].sag = 0.02;
         });
         wide.draw();
       } else {
@@ -555,50 +534,6 @@
       }
     }
 
-    function retension() {
-      if (reduce.matches || stripQuery.matches) return;
-      var start = performance.now();
-      function step(now) {
-        var t = (now - start) / 520, live = false;
-        for (var i = 0; i < pulse.length; i++) {
-          var local = Math.max(0, Math.min(1, (t - i * 0.08) / 0.9));
-          pulse[i] = -0.04 * Math.sin(Math.PI * local) * (1 - local * 0.4);
-          if (local < 1) live = true;
-        }
-        layout();
-        if (live) requestAnimationFrame(step);
-        else { for (var k = 0; k < pulse.length; k++) pulse[k] = 0; layout(); }
-      }
-      requestAnimationFrame(step);
-    }
-
-    function setJob(key, instant) {
-      var job = TASKS[key];
-      if (!job) return;
-      var texts = items.map(function (li) { return li.querySelector("p"); });
-      var targets = [jobLabel].concat(texts);
-      function apply() {
-        jobLabel.textContent = job.name;
-        texts.forEach(function (p, i) { p.textContent = job.items[i]; });
-        layout();
-      }
-      if (instant || reduce.matches) { apply(); return; }
-      targets.forEach(function (t) { t.classList.add("swapping", "swap-out"); });
-      setTimeout(function () {
-        apply();
-        requestAnimationFrame(function () { targets.forEach(function (t) { t.classList.remove("swap-out"); }); });
-      }, 150);
-      retension();
-    }
-    document.querySelectorAll('input[name="task"]').forEach(function (input) {
-      input.addEventListener("change", function () { if (input.checked) setJob(input.value); });
-    });
-    function sync() {
-      var checked = document.querySelector('input[name="task"]:checked');
-      if (checked) setJob(checked.value, true);
-    }
-    window.addEventListener("pageshow", sync);
-    sync();
     return layout;
   }
 
@@ -752,9 +687,10 @@
     return layout;
   }
 
-  /* ── Klikt het? The meter ────────────────────────────────────────
+  /* ── The AhAi moment: the meter ─────────────────────────────────────
      Your work runs straight to the edge; expertise and AI wind around it
-     as far as the match reaches, then run on beside it. Each strand is
+     as far as the match reaches, and stop there, so where they end is the
+     match. Each strand is
      cut into half turns: the halves in front are drawn over the blue and
      cross it as a chord (AI over your work is the green aha), the halves
      behind slip under it. The turns meet where the strands are furthest
@@ -768,7 +704,7 @@
     function wrapAt(x) {
       var f = g.x0 + (g.xR - g.x0) * ratio;
       if (f <= g.x0) return 0;
-      return Math.min(1, (f - g.x0) / (g.P / 2)) * smooth(g.x0 - g.P / 4, g.x0, x) * (1 - smooth(f, f + g.P / 2, x));
+      return Math.min(1, (f - g.x0) / (g.P / 2)) * smooth(g.x0 - g.P / 4, g.x0, x);
     }
     function theta(x) { return (2 * Math.PI * (x - g.x0)) / g.P; }
     /* sign -1 is expertise, above the blue; sign +1 is AI, below it */
@@ -805,6 +741,7 @@
         r.widthAt = function (u) { return facing(seg.xa + (seg.xb - seg.xa) * u); };
         r.w = g.wS;
         r.labelInset = inset;
+        r.seg = seg;
         return r;
       }
       var under = backs.map(strand);
@@ -817,7 +754,12 @@
       under.forEach(function (b) { silk.over(work, b); });
     }
     function draw() {
-      silk.ribbons.forEach(function (r) { r.a = r.fn(0); r.b = r.fn(1); });
+      /* each piece of strand exists only up to the match */
+      var f = g.x0 + (g.xR - g.x0) * ratio;
+      silk.ribbons.forEach(function (r) {
+        r.a = r.fn(0); r.b = r.fn(1);
+        if (r.seg && !r.seg.first) r.reveal = Math.max(0, Math.min(1, (f - r.seg.xa) / (r.seg.xb - r.seg.xa)));
+      });
       silk.draw();
     }
     /* the strip may have changed size while it was hidden */
@@ -910,15 +852,17 @@
     });
   }
 
-  /* ── The page ends on the aha ─────────────────────────────────── */
+  /* ── The aha lands when it comes into view: in the story near the
+     top, and once more where the page ends ─────────────────────── */
   function closing() {
-    var mark = document.querySelector(".closing [data-mark]");
-    if (!mark || !mark.aha) return;
-    if (!("IntersectionObserver" in window)) { mark.aha(1); return; }
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) { if (e.isIntersecting) { mark.aha(1); io.disconnect(); } });
-    }, { threshold: 0.9 });
-    io.observe(mark);
+    document.querySelectorAll("[data-mark-reveal]").forEach(function (mark) {
+      if (!mark.aha) return;
+      if (!("IntersectionObserver" in window)) { mark.aha(1); return; }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) { mark.aha(1); io.disconnect(); } });
+      }, { threshold: 0.9 });
+      io.observe(mark);
+    });
   }
 
   function start() {

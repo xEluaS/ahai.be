@@ -170,12 +170,13 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .klikt__go {
   flex: none; width: calc((100% - var(--s-7)) * 4 / 11);
   display: inline-flex; align-items: center; justify-content: center; gap: var(--s-3);
-  padding: 0 var(--s-5); border-left: 1px solid var(--indigo); color: var(--indigo);
-  font-size: 13px; font-weight: 500; letter-spacing: var(--track-label); text-transform: uppercase; white-space: nowrap;
+  padding: 0 var(--s-5); border-left: 1px solid var(--indigo); background: var(--indigo); color: var(--sky);
+  /* in its own case, so AhAi keeps its capitals */
+  font-size: 15px; font-weight: var(--w-label); letter-spacing: 0.02em; white-space: nowrap;
   transition: background-color var(--d-quick) var(--ease);
 }
-.klikt__go:hover { background: rgba(42, 47, 128, 0.06); }
-.klikt__go:active { background: rgba(42, 47, 128, 0.12); }
+.klikt__go:hover { background: var(--indigo-hover); }
+.klikt__go:active { background: var(--indigo-press); }
 .klikt__go svg { flex: none; width: 18px; height: 12px; transition: transform var(--d-fast) var(--ease); }
 .klikt__go:hover svg { transform: translateX(4px); }
 .klikt__hint, .klikt__fout { font-size: var(--t-small); }
@@ -348,49 +349,110 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 }
 .x-strip { display: none; }
 
-.swap-out { opacity: 0; filter: blur(2px); transform: translateY(4px); }
-.swapping { transition: opacity var(--d-quick) var(--ease), filter var(--d-quick) var(--ease), transform var(--d-quick) var(--ease); }
 
-/* ── Sessies: lanes of silk, not cards ────────────────────────── */
+/* ── Wat ik doe: lanes of silk you can open ─────────────────────── */
 .lanes { display: grid; }
-.lane { position: relative; padding-bottom: var(--s-7); scroll-margin-top: var(--s-6); }
+.lanes.is-choosing { gap: var(--s-3); }
+.lane { position: relative; scroll-margin-top: var(--s-6); }
 .lane[data-dye="indigo"] { --tag: var(--tag-indigo); }
 .lane[data-dye="madder"] { --tag: var(--tag-madder); }
 .lane[data-dye="saffron"] { --tag: var(--tag-saffron); --tag-ink: var(--indigo); }
 .lane__silk { position: relative; height: 112px; }
 .lane__silk svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+.lane__head { margin: 0; font: inherit; }
+/* the whole band is the button */
 .lane__band {
   position: absolute; inset: 0; z-index: 1;
   display: flex; align-items: center; justify-content: space-between; gap: var(--s-5);
-  color: var(--sky); pointer-events: none;
+  color: var(--sky); text-align: left; cursor: pointer;
 }
 .lane__names { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.lane__word, .lane__band h3, .lane__spec { background: var(--tag); color: var(--tag-ink, var(--sky)); padding: 6px 10px; }
-.lane__word { margin: 0; }
-.lane__band h3 { font-size: var(--t-name); font-weight: var(--w-label); letter-spacing: 0.14em; text-transform: uppercase; line-height: 1.5; }
+.lane__word, .lane__name, .lane__sign, .lane__spec { background: var(--tag); color: var(--tag-ink, var(--sky)); padding: 6px 10px; }
+.lane__name { font-size: var(--t-name); font-weight: var(--w-label); letter-spacing: 0.14em; text-transform: uppercase; line-height: 1.5; }
 .lane__spec { text-align: right; }
 .lane__spec span { display: block; }
+/* plus when closed, minus when open */
+.lane__sign { position: relative; align-self: stretch; width: 38px; }
+.lane__sign::before, .lane__sign::after {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 12px; height: 1.5px; margin: -0.75px 0 0 -6px;
+  background: currentColor; transition: transform var(--d-fast) var(--ease);
+}
+.lane__sign::after { transform: rotate(90deg); }
+.lane.is-open .lane__sign::after { transform: rotate(90deg) scaleX(0); }
+.lanes:not(.is-choosing) .lane__sign { display: none; }
+.lanes.is-instant .lane__more, .lanes.is-instant .lane__body, .lanes.is-instant .lane__sign::after { transition: none; }
+
+/* the story behind a band folds open under it */
+.lane__more { display: grid; grid-template-rows: 1fr; overflow: hidden; transition: grid-template-rows 350ms var(--ease); }
+.lane__more > .lane__body { width: 100%; min-height: 0; transition: opacity var(--d-fast) var(--ease), padding 350ms var(--ease); }
+.lanes.is-choosing .lane:not(.is-open) .lane__more { grid-template-rows: 0fr; }
+.lanes.is-choosing .lane:not(.is-open) .lane__body { opacity: 0; padding-block: 0; }
 .lane__body {
   display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  gap: var(--s-5) var(--s-8); padding-top: var(--s-5); align-items: baseline;
+  gap: var(--s-5) var(--s-8); padding-top: var(--s-5); padding-bottom: var(--s-7); align-items: baseline;
 }
+.lane__text { display: grid; gap: var(--s-3); }
 .lane__body p { max-width: 54ch; }
+.lane__meta { font-size: var(--t-small); color: var(--ink-soft); }
 .lane__for { display: grid; gap: var(--s-1); padding-left: var(--s-5); border-left: 1px solid var(--rule); }
 .lane__for dt { color: var(--ink-soft); }
 .lane__for dd { color: var(--ink); }
 
-/* ── Vragen: examples of what gets asked ──────────────────────── */
-.questions {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
-  border-top: 1px solid var(--rule);
+/* ── Vragen: a cloud of questions ─────────────────────────────── */
+.cloud { border-top: 1px solid var(--rule); }
+/* the plain list: without JavaScript, with reduced motion, or on request */
+.cloud__all { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-4) var(--s-7); padding-block: var(--s-7); }
+.cloud.is-live .cloud__all { display: none; }
+.cloud__q {
+  text-align: left; color: var(--indigo); font-weight: var(--w-light); line-height: 1.3;
+  font-size: var(--t-question); text-wrap: balance; cursor: pointer;
+  text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 1px; text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--d-quick) var(--ease), opacity var(--d-fast) var(--ease);
 }
-.questions li {
-  display: grid; gap: var(--s-3); align-content: start;
-  padding: var(--s-6) var(--s-6) var(--s-6) 0; border-bottom: 1px solid var(--rule);
+.cloud__q:hover { text-decoration-color: rgba(42, 47, 128, 0.35); }
+.cloud__all li:nth-child(3n + 2) .cloud__q { font-size: calc(var(--t-question) * 0.8); }
+.cloud__all li:nth-child(3n) .cloud__q { font-size: calc(var(--t-question) * 0.66); color: var(--ink); }
+
+/* the live cloud: each question fades in on its own spot and out again */
+.cloud__stage { position: relative; height: clamp(420px, 56vh, 560px); margin-block: var(--s-5); }
+.cloud__item {
+  position: absolute; width: max-content;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity 900ms var(--ease), transform 900ms var(--ease);
 }
-.questions li:nth-child(even) { padding-left: var(--s-6); border-left: 1px solid var(--rule); }
-.questions p { font-size: var(--t-question); font-weight: var(--w-display); line-height: 1.3; color: var(--indigo); max-width: 26ch; text-wrap: balance; }
-.questions span { color: var(--ink-soft); }
+.cloud__item.is-in { opacity: 1; transform: none; }
+.cloud__item.is-out { opacity: 0; transform: translateY(-6px); transition-duration: 700ms; }
+.cloud__item .cloud__q { display: grid; gap: var(--s-1); text-decoration: none; }
+.cloud__qt {
+  text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 1px; text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--d-quick) var(--ease);
+}
+.cloud__item .cloud__q:hover .cloud__qt, .cloud__item .cloud__q:focus-visible .cloud__qt { text-decoration-color: rgba(42, 47, 128, 0.35); }
+.cloud__item[data-size="m"] .cloud__q { font-size: calc(var(--t-question) * 0.8); }
+.cloud__item[data-size="s"] .cloud__q { font-size: calc(var(--t-question) * 0.66); color: var(--ink); }
+.cloud__who { color: var(--ink-soft); text-decoration: none; }
+/* pointing at one question quiets the others */
+.cloud__stage.has-focus .cloud__item:not(.is-focus) .cloud__q { opacity: 0.22; }
+.cloud__item.is-open .cloud__qt { text-decoration-color: var(--chord-work-ai); text-decoration-thickness: 2px; }
+
+/* the answer, in a reserved place below the cloud, so nothing jumps */
+.cloud__answer {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: var(--s-3) var(--s-6);
+  min-height: 150px; padding: var(--s-5) 0 var(--s-6); border-top: 1px solid var(--rule);
+}
+.cloud__hint { color: var(--ink-soft); }
+.cloud__reply { display: grid; gap: var(--s-2); max-width: 62ch; transition: opacity var(--d-fast) var(--ease), transform var(--d-fast) var(--ease); }
+.cloud__reply.is-before { opacity: 0; transform: translateY(6px); transition: none; }
+.cloud__asked { color: var(--madder); }
+.cloud__text { font-size: var(--t-lede); font-weight: var(--w-light); line-height: 1.6; color: var(--ink); text-wrap: pretty; }
+.cloud__close { justify-self: start; margin-top: var(--s-2); font-size: var(--t-small); color: var(--indigo); text-decoration: underline; text-underline-offset: 0.2em; }
+.cloud__mode { grid-column: 2; grid-row: 1; padding: 6px 12px; border: 1px solid var(--rule); font-size: var(--t-small); color: var(--indigo); white-space: nowrap; transition: border-color var(--d-quick) var(--ease); }
+.cloud__mode:hover { border-color: var(--indigo); }
+@media (max-width: 760px) {
+  .cloud__stage { height: clamp(380px, 62vh, 480px); }
+  .cloud__answer { grid-template-columns: minmax(0, 1fr); }
+  .cloud__mode { grid-column: 1; grid-row: auto; justify-self: start; }
+}
 
 /* ── Wie ──────────────────────────────────────────────────────── */
 .who {
@@ -410,11 +472,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 }
 .creds > div:last-child { border-bottom: 1px solid var(--rule); }
 .creds dt { color: var(--indigo); }
-.practice h3 { color: var(--ink-soft); margin-bottom: var(--s-4); }
-.practice ul { display: grid; gap: var(--s-3); }
-.practice li { padding-left: var(--s-5); position: relative; }
-.practice li::before { content: ""; position: absolute; left: 0; top: 0.8em; width: 12px; height: 1px; background: var(--indigo); }
-
+.who__text > p.who__claim { font-size: var(--t-question); font-weight: var(--w-light); line-height: 1.35; color: var(--indigo); max-width: 22ch; }
+.who__text > p.who__claim + p { margin-top: calc(-1 * var(--s-5)); }
 /* ── Contact: clear sky ───────────────────────────────────────── */
 .contact { padding-block: 0 var(--section); }
 .contact__grid {
@@ -525,18 +584,16 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   }
   .canopy { height: clamp(240px, 38vh, 340px); }
 
-  .lane__silk { height: 136px; }
+  .lane__silk { height: 176px; }
   .braid__tag { display: none; }
   .lane__band { flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; }
+  .lane__sign { align-self: auto; height: 34px; }
   .lane__spec { text-align: left; }
   .lane__spec span { display: inline; }
-  .lane__spec span + span::before { content: " \00B7  "; }
 
   .match__in { grid-template-columns: minmax(0, 1fr); }
   .match__silk { height: 140px; }
 
-  .questions { grid-template-columns: minmax(0, 1fr); }
-  .questions li, .questions li:nth-child(even) { padding: var(--s-5) 0; border-left: 0; }
   .creds > div { grid-template-columns: minmax(0, 1fr); gap: var(--s-1); }
   .footer__in { flex-direction: column; }
 }
@@ -560,15 +617,6 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 /* ── Portrait: the photo fills the frame ─────────────────────── */
 .portrait picture, .portrait img { display: block; width: 100%; height: 100%; }
 .portrait img { position: absolute; inset: 0; object-fit: cover; object-position: 50% 30%; }
-
-/* ── A case from practice, with what participants said ─────────── */
-.case { padding: var(--s-4) 0 var(--s-5); border-top: 1px solid var(--rule); margin-bottom: var(--s-4); }
-.case h4 { margin: 0 0 var(--s-2); font-weight: var(--w-label); color: var(--indigo); }
-.case p { max-width: var(--measure); text-wrap: pretty; }
-.case__quote { margin: var(--s-4) 0 0; padding-left: var(--s-4); border-left: 1px solid var(--indigo); }
-.case__quote p { font-size: var(--t-lede); font-weight: var(--w-light); line-height: 1.5; color: var(--ink); }
-.case__quote p + p { margin-top: var(--s-2); }
-.case__quote footer { margin-top: var(--s-2); font-size: var(--t-small); color: var(--ink-soft); }
 
 /* ── Klikt het? example chips ─────────────────────────────────── */
 .klikt__chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
@@ -630,3 +678,51 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   .match__in.is-before [data-enter], .bericht__status.is-before { transition: none !important; }
   .btn:active, .chip:active, .copy:active { transform: none; }
 }
+
+/* ── AhA, zo dus: what the name means, and its honest other half ── */
+.aha__story { display: grid; gap: var(--s-4); padding-top: var(--s-7); }
+.aha__lead { font-size: var(--t-lede); font-weight: var(--w-light); color: var(--ink-soft); }
+.aha__turn { font-size: var(--t-question); font-weight: var(--w-light); line-height: 1.35; color: var(--ink); max-width: 30ch; text-wrap: balance; }
+/* the name keeps its capitals; the full stop is the one green, the aha */
+.display.aha__pay { margin-top: var(--s-4); font-size: var(--t-display-xl); text-transform: none; letter-spacing: 0.02em; }
+.aha__not {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--s-4) var(--s-8);
+  margin-top: var(--s-8); padding-top: var(--s-6); border-top: 1px solid var(--rule);
+}
+.aha__not h3 { color: var(--indigo); }
+.aha__not p { max-width: var(--measure); text-wrap: pretty; }
+.aha__not p:first-child { font-size: var(--t-lede); font-weight: var(--w-light); line-height: 1.6; color: var(--ink); }
+.aha__not p + p { margin-top: var(--s-4); }
+.aha-line { color: var(--indigo); font-weight: var(--w-body); white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .aha__not { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── Uit de praktijk: a case on the crossing ─────────────────────── */
+.case__head { display: grid; gap: var(--s-1); margin-top: calc(-1 * var(--s-4)); }
+.case__head h3 { font-size: var(--t-question); font-weight: var(--w-light); line-height: 1.3; color: var(--indigo); }
+.case__head p { color: var(--ink-soft); }
+.crossing__list li p.label { margin-bottom: var(--s-2); font-size: var(--t-label); font-weight: var(--w-label); line-height: 1.5; color: var(--indigo); }
+.case__said { margin: 0; padding: 0 28px 0 46px; }
+.case__said p { font-size: var(--t-name); font-weight: var(--w-light); line-height: 1.55; }
+.crossing__list .case__said p { padding: 0; }
+.case__said p + p { margin-top: var(--s-2); }
+.case__said footer { margin-top: var(--s-2); font-size: var(--t-small); color: var(--ink-soft); }
+@media (max-width: 1199px) {
+  .crossing__list .label, .case__said { padding: 0; }
+}
+
+/* ── The match lands: AhAi turns into AhA! ────────────────────── */
+.match__mark { font-size: 34px; line-height: 1; margin-bottom: calc(-1 * var(--s-2)); }
+
+.aha__pay .mark { font-weight: var(--w-display); letter-spacing: 0.02em; color: inherit; }
+.aha__pay .mark__i { width: 0.242em; }
+
+/* the name in the lede leads to the section about him */
+.lede__name {
+  color: var(--indigo); text-decoration: underline; text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em; text-decoration-color: rgba(42, 47, 128, 0.35);
+  transition: text-decoration-color var(--d-quick) var(--ease);
+}
+.lede__name:hover { text-decoration-color: var(--indigo); }

@@ -22,7 +22,8 @@
     fit: panel.querySelector("[data-fit]"),
     mail: panel.querySelector("[data-mail]"),
     again: panel.querySelector("[data-again]"),
-    mark: panel.querySelector(".match__mark")
+    mark: panel.querySelector(".match__mark"),
+    quip: panel.querySelector(".match__quip")
   };
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
   var busy = false, keep = false;
@@ -207,6 +208,49 @@
     var m = window.AhAi && window.AhAi.meter;
     if (m) m.show(score, onStep);
     else if (onStep) onStep(1);
+  }
+  /* While the answer is on its way, the mark thinks: its i leans towards
+     the ! and back, as if it almost has it. Below the wait, a light line
+     changes every few seconds. */
+  var QUIPS = [
+    "De draden worden gesorteerd…",
+    "AI leest je taak. Twee keer, voor de zekerheid.",
+    "Expertise en AI overleggen nog even…",
+    "Even de koffie van de AI bijvullen…",
+    "Rood, geel en blauw zoeken hun plek…",
+    "Goede ideeën laten zich niet haasten…",
+    "De AI doet alsof dit een makkelijke is…",
+    "Zoeken naar het moment dat het klikt…",
+    "Ondertussen: heb jij al koffie?"
+  ];
+  var quipTimer = 0, thinkTimer = 0;
+  function think(on) {
+    clearInterval(quipTimer);
+    clearInterval(thinkTimer);
+    var m = out.mark && out.mark.querySelector("[data-mark]");
+    if (!on) {
+      if (out.quip) { out.quip.hidden = true; out.quip.textContent = ""; }
+      return;
+    }
+    if (out.mark) out.mark.hidden = false;
+    if (out.quip) {
+      /* a fresh order each time, so the lines never come in the same row */
+      var order = QUIPS.slice().sort(function () { return Math.random() - 0.5; }), at = 0;
+      out.quip.textContent = order[0];
+      out.quip.hidden = false;
+      if (!reduce.matches) quipTimer = setInterval(function () {
+        out.quip.classList.add("is-swap");
+        setTimeout(function () {
+          at = (at + 1) % order.length;
+          out.quip.textContent = order[at];
+          out.quip.classList.remove("is-swap");
+        }, 200);
+      }, 2600);
+    }
+    if (m && m.aha && !reduce.matches) {
+      var up = false;
+      thinkTimer = setInterval(function () { up = !up; m.aha(up ? 0.35 : 0); }, 700);
+    }
   }
   function waiting() {
     var m = window.AhAi && window.AhAi.meter;
@@ -404,8 +448,15 @@
     inner.setAttribute("aria-busy", "true");
     meter(null);
     waiting();
+    think(true);
     panel.scrollIntoView({ behavior: reduce.matches ? "auto" : "smooth", block: "start" });
-    analyse(text).then(function (result) { render(text, result); }, fail).then(function () {
+    /* ?traag (or ?traag=10) in the address makes the answer wait that many
+       seconds, so the wait itself can be seen and tested */
+    var slow = /[?&]traag(?:=(\d+))?/.exec(location.search);
+    var pause = slow ? new Promise(function (ok) { setTimeout(ok, (Number(slow[1]) || 6) * 1000); }) : null;
+    var answer = analyse(text);
+    if (pause) answer = Promise.all([answer, pause]).then(function (both) { return both[0]; });
+    answer.then(function (result) { think(false); render(text, result); }, function () { think(false); fail(); }).then(function () {
       busy = false;
       inner.setAttribute("aria-busy", "false");
       out.score.focus({ preventScroll: true });
@@ -420,7 +471,7 @@
     leaving = setTimeout(function () {
       leaving = 0;
       /* a wait still running stops here, while the strip can be measured */
-      if (busy) meter(null);
+      if (busy) { meter(null); think(false); }
       panel.hidden = true;
       panel.classList.remove("is-leaving");
       /* a vague description is kept, so it can be added to */

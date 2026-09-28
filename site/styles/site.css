@@ -717,7 +717,14 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 }
 
 /* ── The match lands: AhAi turns into AhA! ────────────────────── */
-.match__mark { font-size: 34px; line-height: 1; margin-bottom: calc(-1 * var(--s-2)); }
+/* the mark stands beside the score: thinking while it waits, AhA! once it lands */
+.match__top { display: flex; align-items: baseline; gap: var(--s-4); }
+.match__mark { flex: none; font-size: 34px; line-height: 1; }
+.match__quip {
+  min-height: 1.7em; color: var(--ink-soft); font-weight: var(--w-light);
+  transition: opacity var(--d-fast) var(--ease), transform var(--d-fast) var(--ease);
+}
+.match__quip.is-swap { opacity: 0; transform: translateY(4px); transition-duration: 200ms; }
 
 .aha__pay .mark { font-weight: var(--w-display); letter-spacing: 0.02em; color: inherit; }
 .aha__pay .mark__i { width: 0.242em; }

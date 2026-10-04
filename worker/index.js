@@ -40,6 +40,8 @@ Geef bij elke maatstaf een reden: een korte, concrete zin over de situatie van d
 
 Geef daarna 2 tot 3 acties: wat Elias concreet voor deze bezoeker kan doen, in de ik-vorm van Elias, elk hoogstens 15 woorden, bijvoorbeeld "Ik bouw een tool die je bestellingen uit je mails haalt." Maak ze specifiek voor hun situatie, niet algemeen. Als het past, gaat één actie over hoe de bezoeker zelf aan het stuur blijft.
 
+Beschrijf in "stappen" hoe het werk van de bezoeker zou lopen met hulp van AI: 3 tot 5 stappen in de volgorde van het werk, elk hoogstens 4 woorden, zoals "Mails lezen" of "Rooster nakijken". Zeg per stap wie het doet: "ai" als AI of een tool het overneemt, "mens" als een mens het blijft doen. Er is altijd minstens één stap voor AI en één voor een mens, meestal het nakijken of beslissen. Vraagt de bezoeker om een website, app of tool, beschrijf dan de stappen van idee tot iets dat werkt.
+
 Kies ook de dienst die het best past:
 - "uitleggen": het team moet vooral begrijpen wat AI kan en zelf leren werken met AI-tools.
 - "kijken": het proces is breed of onduidelijk, dus eerst ter plaatse kijken waar AI tijd wint.
@@ -58,10 +60,14 @@ const SCHEMA = {
     tijdwinst: MEASURE,
     haalbaarheid: MEASURE,
     acties: { type: "ARRAY", items: { type: "STRING" } },
+    stappen: {
+      type: "ARRAY",
+      items: { type: "OBJECT", properties: { stap: { type: "STRING" }, wie: { type: "STRING", enum: ["ai", "mens"] } }, required: ["stap", "wie"] }
+    },
     service: { type: "STRING", enum: SERVICES },
     vraag: { type: "STRING" }
   },
-  required: ["status", "tijdwinst", "haalbaarheid", "acties", "service"]
+  required: ["status", "tijdwinst", "haalbaarheid", "acties", "stappen", "service"]
 };
 
 export default {
@@ -198,7 +204,13 @@ function clean(o) {
   const actions = (Array.isArray(o.acties) ? o.acties : []).map((a) => line(a, 160)).filter(Boolean).slice(0, 3);
   // an answer without its measures or actions is incomplete, not vague
   if (factors.length < 2 || actions.length < 1) throw new Error("onvolledig");
-  return { status: "ok", factors, acties: actions, service: SERVICES.includes(o.service) ? o.service : "kijken" };
+  // How the work could run: a flow only says something with a step for AI
+  // and one for a person; without both, the page shows no flow.
+  const steps = (Array.isArray(o.stappen) ? o.stappen : [])
+    .map((s) => ({ stap: line(s && s.stap, 40), wie: s && s.wie === "ai" ? "ai" : "mens" }))
+    .filter((s) => s.stap).slice(0, 5);
+  const flow = steps.length >= 3 && steps.some((s) => s.wie === "ai") && steps.some((s) => s.wie === "mens") ? steps : [];
+  return { status: "ok", factors, acties: actions, stappen: flow, service: SERVICES.includes(o.service) ? o.service : "kijken" };
 }
 
 async function keep(db, tekst, result, bron) {

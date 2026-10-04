@@ -15,10 +15,12 @@
   function open(lane, instant) {
     if (instant) box.classList.add("is-instant");
     lanes.forEach(function (l) {
-      var on = l === lane;
+      var on = l === lane, was = l.classList.contains("is-open");
       l.classList.toggle("is-open", on);
       l.querySelector(".lane__band").setAttribute("aria-expanded", on ? "true" : "false");
       l.querySelector(".lane__more").inert = !on;
+      /* a band that opens tells its little story (stories.js) */
+      if (on && !was) l.dispatchEvent(new CustomEvent("lane-open"));
     });
     if (instant) {
       void box.offsetHeight;

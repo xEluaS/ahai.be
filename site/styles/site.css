@@ -398,6 +398,73 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .lane__for dt { color: var(--ink-soft); }
 .lane__for dd { color: var(--ink); }
 
+/* ── A flow: steps as knots on a thread ────────────────────────────
+   Used for "Zo kan het lopen" in the Klikt het? reading and for the
+   little story in each band. A step AI takes over turns saffron, knot
+   and the thread into it; a step that stays with a person stays in the
+   flow's own ink. */
+.flow {
+  --knot: 14px;
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  margin: 0; padding: 0; list-style: none;
+}
+/* knot, name, then who: the who-tags line up even when a name wraps */
+.flow__step { position: relative; display: grid; grid-template-rows: auto 1fr auto; justify-items: center; gap: var(--s-2); text-align: center; }
+.flow__step + .flow__step::before {
+  content: ""; position: absolute; top: calc(var(--knot) / 2 - 1px); right: 50%; width: 100%; height: 2px;
+  background: var(--flow-ink, var(--indigo)); transform-origin: left center;
+  transition: background-color var(--d-slow) var(--ease) var(--d, 0ms), transform var(--d-slow) var(--ease) var(--d, 0ms), opacity var(--d-fast) var(--ease) var(--d, 0ms);
+}
+.flow__knot {
+  position: relative; z-index: 1; width: var(--knot); height: var(--knot); border-radius: 50%;
+  background: var(--flow-ink, var(--indigo));
+  transition: background-color var(--d-slow) var(--ease) var(--d, 0ms), transform var(--d-fast) var(--ease) var(--d, 0ms), opacity var(--d-fast) var(--ease) var(--d, 0ms);
+}
+.flow__name {
+  max-width: 16ch; font-size: var(--t-small); line-height: 1.35; color: var(--ink); text-wrap: balance;
+  transition: opacity var(--d-fast) var(--ease) var(--d, 0ms);
+}
+.flow__who { display: grid; justify-items: center; font-size: var(--t-label); font-weight: var(--w-label); letter-spacing: var(--track-label); text-transform: uppercase; }
+.flow__who > span { grid-area: 1 / 1; padding: 2px 6px; transition: opacity var(--d-fast) var(--ease) var(--d, 0ms); }
+.flow__then { color: var(--ink-soft); }
+.flow__now { background: var(--tag-indigo); color: var(--sky); }
+.flow__step.is-ai .flow__now { background: var(--tag-saffron); color: var(--indigo); }
+/* AI takes its steps over one by one */
+.flow__step.is-ai { --d: calc(var(--n, 0) * 220ms + 200ms); }
+.flow__step.is-ai .flow__knot, .flow__step.is-ai::before { background: var(--saffron); }
+.flow__step.is-ai .flow__then { opacity: 0; }
+/* before the story is told (only with JavaScript), they are still done by hand */
+.is-ready:not(.is-told) .flow__step.is-ai .flow__knot,
+.is-ready:not(.is-told) .flow__step.is-ai::before { background: var(--flow-ink, var(--indigo)); }
+.is-ready:not(.is-told) .flow__step.is-ai .flow__now { opacity: 0; }
+.is-ready:not(.is-told) .flow__step.is-ai .flow__then { opacity: 1; }
+.is-rewind, .is-rewind *, .is-rewind *::before { transition: none !important; }
+
+/* The story under a band. */
+.story { grid-column: 1 / -1; position: relative; margin: 0; padding-top: var(--s-5); }
+/* Ik leg het uit: the tangle straightens, then the knots appear */
+.story--untangle { --flow-ink: var(--madder); }
+.story__tangle { position: absolute; left: 0; top: var(--s-5); width: 100%; height: 40px; overflow: visible; pointer-events: none; transition: opacity var(--d-fast) var(--ease) 150ms; }
+.story__tangle path { fill: none; stroke: var(--madder); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.story--untangle:not(.is-ready) .story__tangle, .story--untangle.is-told .story__tangle { opacity: 0; }
+.story--untangle .flow__step { --d: calc(var(--n, 0) * 160ms); }
+.story--untangle.is-ready:not(.is-told) .flow__step::before,
+.story--untangle.is-ready:not(.is-told) .flow__knot,
+.story--untangle.is-ready:not(.is-told) .flow__name { opacity: 0; }
+/* Ik bouw het: the thread grows knot by knot to a tool in use */
+.story--grow .flow__step { --d: calc(var(--n, 0) * 380ms); }
+.story--grow .flow__knot, .story--grow .flow__name { transition-delay: calc(var(--d) + 280ms); }
+.story--grow .flow__step.is-built .flow__knot { background: var(--saffron); }
+.story--grow.is-ready:not(.is-told) .flow__step::before { transform: scaleX(0); }
+.story--grow.is-ready:not(.is-told) .flow__knot { transform: scale(0.4); opacity: 0; }
+.story--grow.is-ready:not(.is-told) .flow__name { opacity: 0; }
+
+/* "Wat ik doe" opens with what it is all for. */
+.section__claim { max-width: 40ch; font-size: var(--t-lede); font-weight: var(--w-light); line-height: 1.5; color: var(--ink); text-wrap: pretty; }
+
+/* A strong match: thread snippets burst from the dot of AhA! */
+.burst { position: fixed; inset: 0; z-index: 40; pointer-events: none; }
+
 /* ── Vragen: a cloud of questions ─────────────────────────────── */
 .cloud { border-top: 1px solid var(--rule); }
 /* the plain list: without JavaScript, with reduced motion, or on request */
@@ -599,6 +666,19 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
   .creds > div { grid-template-columns: minmax(0, 1fr); gap: var(--s-1); }
   .footer__in { flex-direction: column; }
+}
+
+/* A flow with who-does-what reads top to bottom wherever it has too little
+   room to lay its steps side by side: on a phone, and in the narrow
+   reading column at middle widths. It asks its own container, not the
+   screen. */
+.match__body, .story { container: flow / inline-size; }
+@container flow (max-width: 620px) {
+  .flow:not(.flow--plain) { grid-auto-flow: row; grid-auto-columns: auto; row-gap: var(--s-4); }
+  .flow:not(.flow--plain) .flow__step { grid-template-columns: var(--knot) minmax(0, 1fr) auto; grid-template-rows: none; justify-items: start; align-items: center; column-gap: var(--s-3); text-align: left; }
+  .flow:not(.flow--plain) .flow__step + .flow__step::before { top: auto; right: auto; bottom: 50%; left: calc(var(--knot) / 2 - 1px); width: 2px; height: calc(100% + var(--s-4)); }
+  .flow:not(.flow--plain) .flow__name { max-width: none; }
+  .flow:not(.flow--plain) .flow__who { justify-self: end; justify-items: end; }
 }
 
 @media (max-width: 560px) {

@@ -23,7 +23,9 @@
     mail: panel.querySelector("[data-mail]"),
     again: panel.querySelector("[data-again]"),
     mark: panel.querySelector(".match__mark"),
-    quip: panel.querySelector(".match__quip")
+    quip: panel.querySelector(".match__quip"),
+    flow: panel.querySelector("[data-flow]"),
+    flowCap: panel.querySelector("#klikt-stappen")
   };
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
   var busy = false, keep = false;
@@ -203,6 +205,89 @@
     }
     /* empty blocks would still take up the grid's gaps */
     [out.caption, out.acts, out.reasons, out.fit].forEach(function (n) { if (n) n.hidden = true; });
+    clearTimeout(flowTimer);
+    if (out.flow) {
+      out.flow.textContent = "";
+      out.flow.classList.remove("is-told");
+      out.flow.hidden = out.flowCap.hidden = true;
+    }
+  }
+  /* "Zo kan het lopen": the visitor's own steps as knots on a thread. They
+     start as work done by hand; then AI takes over its steps one by one,
+     and the check stays with a person. Only an answer from the analysis
+     service has steps; the plain reading shows no flow. */
+  var flowTimer = 0;
+  function flow(steps) {
+    if (!out.flow || !steps || steps.length < 3) return;
+    steps.forEach(function (s, n) {
+      var ai = s.wie === "ai", li = el("li", ai ? "flow__step is-ai" : "flow__step"), who = el("span", "flow__who");
+      li.style.setProperty("--n", n);
+      if (ai) {
+        /* "met de hand" is the before picture; a screen reader hears only who does it */
+        var then = el("span", "flow__then", "met de hand");
+        then.setAttribute("aria-hidden", "true");
+        who.append(then);
+      }
+      who.append(el("span", "flow__now", ai ? "AI" : "Jij"));
+      li.append(el("span", "flow__knot"), el("span", "flow__name", s.stap), who);
+      out.flow.append(li);
+    });
+    out.flow.classList.add("is-ready");
+    out.flow.hidden = out.flowCap.hidden = false;
+  }
+  /* The takeover is the last beat of the reading: after the count-up, and
+     on a strong match after AhA! and its burst. */
+  function tellFlow(wait) {
+    if (!out.flow || out.flow.hidden) return;
+    clearTimeout(flowTimer);
+    flowTimer = setTimeout(function () { out.flow.classList.add("is-told"); }, reduce.matches ? 0 : wait);
+  }
+
+  /* A strong match ends in a small burst of thread snippets from the dot
+     of AhA!, in the three dyes, gone within a second. */
+  var STRONG = 80;
+  function burst(from) {
+    if (reduce.matches || !from) return;
+    var b = from.getBoundingClientRect(), x0 = b.left + b.width / 2, y0 = b.top + b.height / 2;
+    var W = document.documentElement.clientWidth, H = document.documentElement.clientHeight;
+    var dpr = Math.min(2, window.devicePixelRatio || 1), c = document.createElement("canvas");
+    c.className = "burst";
+    c.width = Math.round(W * dpr);
+    c.height = Math.round(H * dpr);
+    c.style.width = W + "px";
+    c.style.height = H + "px";
+    document.body.appendChild(c);
+    var g = c.getContext("2d"), root = getComputedStyle(document.documentElement);
+    g.scale(dpr, dpr);
+    var ink = ["--madder", "--indigo", "--saffron"].map(function (n) { return root.getPropertyValue(n).trim(); });
+    var bits = [];
+    for (var i = 0; i < 36; i++) {
+      var a = -Math.PI / 2 + (Math.random() - 0.5) * 2.4, v = 3 + Math.random() * 5;
+      bits.push({ x: x0, y: y0, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.3, len: 6 + Math.random() * 9, c: ink[i % 3] });
+    }
+    var t0 = 0, last = 0;
+    requestAnimationFrame(function step(now) {
+      if (!t0) t0 = last = now;
+      /* the same flight on any refresh rate */
+      var t = (now - t0) / 1000, f = Math.min(3, (now - last) / 16.7);
+      last = now;
+      g.clearRect(0, 0, W, H);
+      g.globalAlpha = Math.max(0, 1 - t * t);
+      g.lineWidth = 2;
+      g.lineCap = "round";
+      bits.forEach(function (p) {
+        p.vy += 0.22 * f; p.vx *= Math.pow(0.985, f);
+        p.x += p.vx * f; p.y += p.vy * f; p.r += p.vr * f;
+        var dx = Math.cos(p.r) * p.len / 2, dy = Math.sin(p.r) * p.len / 2;
+        g.strokeStyle = p.c;
+        g.beginPath();
+        g.moveTo(p.x - dx, p.y - dy);
+        g.lineTo(p.x + dx, p.y + dy);
+        g.stroke();
+      });
+      if (t < 1) requestAnimationFrame(step);
+      else c.remove();
+    });
   }
   function meter(score, onStep) {
     var m = window.AhAi && window.AhAi.meter;
@@ -259,13 +344,13 @@
   /* The reading settles in once the answer is there: verdict and threads
      first, then the actions one by one, then the way on. */
   function enter() {
-    var order = [out.verdict, out.caption, out.frame, out.acts];
+    var order = [out.verdict, out.caption, out.frame, out.flowCap, out.flow, out.acts];
     out.reasons.querySelectorAll("li").forEach(function (li) { order.push(li); });
     order.push(out.fit, out.again.parentNode);
     var step = 0;
     order.forEach(function (n, i) {
       if (!n || n.hidden) return;
-      if (i > 3) step++;
+      if (i > 5) step++;
       n.setAttribute("data-enter", "");
       n.style.setProperty("--i", step);
     });
@@ -297,13 +382,18 @@
     pct.setAttribute("aria-hidden", "true");
     out.score.append(count, pct, el("span", "sr-only", score + " procent"));
     if (out.mark) out.mark.hidden = false;
+    /* the flow is drawn first, so its takeover can follow the count-up */
+    flow(result.stappen);
     meter(score, function (e) {
       count.textContent = String(Math.round(score * e));
-      /* once the strands have wound in, AhAi becomes AhA! */
+      /* once the strands have wound in, AhAi becomes AhA!; on a strong
+         match, snippets fly as the dot lands; then AI takes its steps */
       if (e >= 1 && out.mark) {
         var m = out.mark.querySelector("[data-mark]");
         if (m && m.aha) m.aha(1);
+        if (score >= STRONG) setTimeout(function () { burst(out.mark.querySelector(".mark__dot")); }, 380);
       }
+      if (e >= 1) tellFlow(score >= STRONG ? 1300 : 450);
     });
 
     out.verdict.textContent = verdictOf(score);

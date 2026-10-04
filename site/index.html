@@ -16,6 +16,7 @@
 <script src="scripts/contact.js" defer></script>
 <script src="scripts/vragen.js" defer></script>
 <script src="scripts/lanes.js" defer></script>
+<script src="scripts/stories.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#inhoud">Naar de inhoud</a>
@@ -106,6 +107,8 @@
           <dl class="match__frame" data-frame aria-labelledby="klikt-kader"></dl>
         </div>
         <div class="match__body">
+          <p class="match__caption label" id="klikt-stappen" hidden>Zo kan het lopen</p>
+          <ol class="flow" data-flow aria-labelledby="klikt-stappen" hidden></ol>
           <p class="match__caption label" id="klikt-acties">Wat ik voor je kan doen</p>
           <ul class="match__reasons" data-reasons aria-labelledby="klikt-acties"></ul>
           <p class="match__fit" data-fit></p>
@@ -144,6 +147,7 @@
       <div class="rule" aria-hidden="true"></div>
       <div class="section__head">
         <h2 id="doen-title" class="display">Wat ik doe</h2>
+        <p class="section__claim">Ik zet AI in om je huidige werk te verbeteren, zodat mensen geen tijd meer verliezen aan geestdodend, herhalend werk.</p>
         <p class="section__intro">Waar sta je? Open wat bij je past. Begrijpen, ontdekken en toepassen volgen vaak op elkaar, maar je hoeft ze niet alle drie te doen.</p>
       </div>
     </div>
@@ -163,6 +167,14 @@
               <p class="lane__meta">1 uur tot een halve dag, ter plaatse of via Teams</p>
             </div>
             <dl class="lane__for"><dt class="label">Begrijpen</dt><dd>Workshops, opleidingen, lezingen en begeleiding.</dd></dl>
+            <figure class="story story--untangle" data-story aria-hidden="true">
+              <svg class="story__tangle" focusable="false"><path/></svg>
+              <ol class="flow flow--plain">
+                <li class="flow__step"><span class="flow__knot"></span><span class="flow__name">Je vraag</span></li>
+                <li class="flow__step"><span class="flow__knot"></span><span class="flow__name">Uitleg met je eigen werk</span></li>
+                <li class="flow__step"><span class="flow__knot"></span><span class="flow__name">Zelf aan de slag</span></li>
+              </ol>
+            </figure>
           </div>
         </div>
       </article>
@@ -181,6 +193,14 @@
               <p class="lane__meta">Een dag, bij jou op het werk</p>
             </div>
             <dl class="lane__for"><dt class="label">Ontdekken</dt><dd>Vertrekken vanuit je werk, niet vanuit de tools.</dd></dl>
+            <figure class="story" data-story aria-hidden="true">
+              <ol class="flow">
+                <li class="flow__step is-ai" style="--n: 0"><span class="flow__knot"></span><span class="flow__name">Mails lezen</span><span class="flow__who"><span class="flow__then">met de hand</span><span class="flow__now">AI</span></span></li>
+                <li class="flow__step is-ai" style="--n: 1"><span class="flow__knot"></span><span class="flow__name">In Excel zetten</span><span class="flow__who"><span class="flow__then">met de hand</span><span class="flow__now">AI</span></span></li>
+                <li class="flow__step" style="--n: 2"><span class="flow__knot"></span><span class="flow__name">Nakijken</span><span class="flow__who"><span class="flow__now">Jij</span></span></li>
+                <li class="flow__step is-ai" style="--n: 3"><span class="flow__knot"></span><span class="flow__name">Rapport maken</span><span class="flow__who"><span class="flow__then">met de hand</span><span class="flow__now">AI</span></span></li>
+              </ol>
+            </figure>
           </div>
         </div>
       </article>
@@ -199,6 +219,14 @@
               <p class="lane__meta">Van prototype tot maatwerk</p>
             </div>
             <dl class="lane__for"><dt class="label">Toepassen</dt><dd>Prototypes, AI-tools, automatisaties en maatwerk.</dd></dl>
+            <figure class="story story--grow" data-story aria-hidden="true">
+              <ol class="flow flow--plain">
+                <li class="flow__step" style="--n: 0"><span class="flow__knot"></span><span class="flow__name">Idee</span></li>
+                <li class="flow__step" style="--n: 1"><span class="flow__knot"></span><span class="flow__name">Eerste versie</span></li>
+                <li class="flow__step" style="--n: 2"><span class="flow__knot"></span><span class="flow__name">Testen</span></li>
+                <li class="flow__step is-built" style="--n: 3"><span class="flow__knot"></span><span class="flow__name">Tool in gebruik</span></li>
+              </ol>
+            </figure>
           </div>
         </div>
       </article>

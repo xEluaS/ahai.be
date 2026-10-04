@@ -15,14 +15,18 @@
   var root = getComputedStyle(document.documentElement);
   function token(name) { return root.getPropertyValue(name).trim(); }
 
-  var DYE = { indigo: token("--indigo"), madder: token("--madder"), saffron: token("--saffron"), chord: token("--chord-madder-saffron") };
-  var TAG = { indigo: token("--tag-indigo"), madder: token("--tag-madder"), saffron: token("--tag-saffron") };
-  var CHORD = {
-    "indigo+saffron": token("--chord-work-ai"),
-    "indigo+madder": token("--chord-work-why"),
-    "madder+saffron": token("--chord-madder-saffron"),
-    all: token("--chord-all")
-  };
+  /* The dyes come from tokens.css. They are read in start(), once the
+     stylesheet has applied: Safari can run this script before that, and
+     a dye read too early is empty, which an SVG paints black. */
+  var DYE = {}, TAG = {}, CHORD = {};
+  function readDyes() {
+    DYE.indigo = token("--indigo"); DYE.madder = token("--madder"); DYE.saffron = token("--saffron"); DYE.chord = token("--chord-madder-saffron");
+    TAG.indigo = token("--tag-indigo"); TAG.madder = token("--tag-madder"); TAG.saffron = token("--tag-saffron");
+    CHORD["indigo+saffron"] = token("--chord-work-ai");
+    CHORD["indigo+madder"] = token("--chord-work-why");
+    CHORD["madder+saffron"] = token("--chord-madder-saffron");
+    CHORD.all = token("--chord-all");
+  }
 
   function el(name, attrs, parent) {
     var n = document.createElementNS(NS, name);
@@ -865,7 +869,24 @@
     });
   }
 
+  /* Wait, frame by frame, until the stylesheet has applied (the dyes are
+     there), for at most about five seconds; then the silk is woven. */
+  function whenStyled(go) {
+    var tries = 0;
+    (function check() {
+      if (token("--indigo") || ++tries > 300) go();
+      else requestAnimationFrame(check);
+    })();
+  }
   function start() {
+    whenStyled(weave);
+    menu();
+    marks();
+    closing();
+    toTop();
+  }
+  function weave() {
+    readDyes();
     makeWeave(function () {
       var layouts = [heroCanopy(), crossing(), lanes(), portrait(), braid()].filter(Boolean);
       var m = meter();
@@ -884,10 +905,6 @@
         document.fonts.ready.then(function () { layouts.forEach(function (f) { f(); }); });
       }
     });
-    menu();
-    marks();
-    closing();
-    toTop();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();
